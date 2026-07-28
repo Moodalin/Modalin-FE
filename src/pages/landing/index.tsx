@@ -17,7 +17,7 @@ const workflow = [
 const problems = [
   <>Pesanan sebenarnya sudah ada, tapi kami <strong className="text-primary-dark">belum punya modal</strong> untuk mulai membuatnya</>,
   <>Kalau ada modal untuk bahan, <strong className="text-primary-dark">pesanan ini sudah bisa kami kerjakan</strong></>,
-  <>Saya sering menerima pesan, <strong className="text-primary-dark">“Kalau dibuat lagi saya mau pesan.”</strong> Tapi tanpa modal, saya belum bisa membuatnya.</>,
+  <>Saya sering menerima pesan, <strong className="text-primary-dark">Kalau dibuat lagi saya mau pesan.</strong> Tapi tanpa modal, saya belum bisa membuatnya.</>,
 ]
 
 function CollectionPreview() {
