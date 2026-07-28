@@ -1,0 +1,187 @@
+import { ArrowRight, HandCoins, PackageCheck, PenLine, ShoppingBag, ShoppingCart, Tag, Truck } from 'lucide-react'
+import { motion, type Transition, useInView, useReducedMotion } from 'motion/react'
+import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import floresWeaver from '@/assets/textiles/flores-weaver.jpg'
+import lembataIkat from '@/assets/textiles/lembata-ikat.jpg'
+import registerJavaWeavers from '@/assets/textiles/register-java-weavers.jpg'
+import { MarketingHeader } from '@/components/layout/marketing'
+import { CampaignCollectionLoading } from '@/components/campaign/campaign-loading'
+import { ButtonLink } from '@/components/ui/button'
+import { useCampaigns } from '@/hooks/campaign/use-campaigns'
+
+const workflow = [
+  { icon: PenLine, title: 'Persiapan pengrajin', text: 'Pengrajin mengatur target modal awal dan profil.' },
+  { icon: ShoppingBag, title: 'Target Tercapai', text: 'Target pre-order terpenuhi, produksi siap dimulai.' },
+  { icon: PackageCheck, title: 'Proses Produksi', text: 'Pengrajin mulai membuat pesanan secara bertahap.' },
+  { icon: Truck, title: 'Pengiriman', text: 'Pesanan selesai dan dikirim ke pelanggan.' },
+]
+
+function CollectionPreview() {
+  const { campaigns, loading, error } = useCampaigns({ notifyOnError: false })
+  const shouldReduceMotion = useReducedMotion()
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const previewCampaigns = campaigns
+
+  useEffect(() => {
+    setSelectedIndex((current) => Math.min(current, Math.max(0, previewCampaigns.length - 1)))
+  }, [previewCampaigns.length])
+
+
+  if (loading) return <CampaignCollectionLoading />
+  if (error || previewCampaigns.length === 0) return <section id="collection" aria-labelledby="collection-heading" className="bg-white px-5 py-20 lg:px-8 lg:py-28"><div className="mx-auto max-w-[1120px]"><h2 id="collection-heading" className="sr-only">Preview koleksi kain tenun</h2><p className="text-center text-sm text-muted">Belum ada koleksi yang tersedia.</p></div></section>
+
+  const activeIndex = Math.min(Math.max(0, selectedIndex), previewCampaigns.length - 1)
+  const selected = previewCampaigns[activeIndex]!
+  const slots = [
+    { key: 'outer-left', offset: -2, className: 'hidden h-[80px] w-[86px] sm:block', scale: .43, opacity: .45 },
+    { key: 'left', offset: -1, className: 'h-[132px] w-[142px]', scale: .72, opacity: .8 },
+    { key: 'active', offset: 0, className: 'h-[184px] w-[198px]', scale: 1, opacity: 1 },
+    { key: 'right', offset: 1, className: 'h-[132px] w-[142px]', scale: .72, opacity: .8 },
+    { key: 'outer-right', offset: 2, className: 'hidden h-[80px] w-[86px] sm:block', scale: .43, opacity: .45 },
+  ]
+  const visibleCount = Math.min(5, previewCampaigns.length)
+  const startOffset = -Math.min(2, Math.floor(visibleCount / 2))
+  const visibleSlots = slots.filter(({ offset }) => offset >= startOffset && offset < startOffset + visibleCount)
+  const collectionTransition: Transition = { duration: shouldReduceMotion ? 0 : .3, ease: [0.16, 1, 0.3, 1] }
+
+  const cardContent = (campaign: typeof selected) => {
+    const progress = campaign.targetAmount ? Math.min(100, Math.round(campaign.currentAmount / campaign.targetAmount * 100)) : 0
+    return <>
+      <img src={campaign.imageUrl} alt="" className="h-[47%] w-full rounded-sm object-cover" loading="lazy" decoding="async" />
+      <span className="mt-2 block">
+        <span className="flex items-start justify-between gap-1"><span className="text-[8px] font-semibold leading-tight text-primary-dark">{campaign.title}</span><span className="shrink-0 text-[5px] font-medium text-primary-dark">{campaign.daysLeft} Hari Tersisa</span></span>
+        <span className="mt-1 block text-[5px] text-muted">{campaign.location}</span>
+        <span className="mt-3 flex items-baseline justify-between gap-1"><span className="text-[10px] font-semibold text-primary-dark">{progress}%</span><span className="text-[5px] text-muted">Dana Terkumpul</span></span>
+        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-primary-dark" style={{ width: `${progress}%` }} /></span>
+      </span>
+    </>
+  }
+
+  return (
+    <section id="collection" aria-labelledby="collection-heading" className="overflow-hidden bg-white py-20 lg:py-28">
+      <h2 id="collection-heading" className="sr-only">Preview koleksi kain tenun</h2>
+      <div className="mx-auto flex max-w-[774px] items-center justify-center gap-3 px-2 sm:gap-4 sm:px-5" aria-label="Preview koleksi kain tenun">
+        {visibleSlots.map((slot) => {
+          const campaignIndex = ((activeIndex + slot.offset) % previewCampaigns.length + previewCampaigns.length) % previewCampaigns.length
+          const campaign = previewCampaigns[campaignIndex]!
+          const isActive = slot.offset === 0
+          const cardClassName = `block h-full w-full overflow-hidden rounded-md border bg-white p-3 text-left ${isActive ? 'border-primary shadow-[0_5px_12px_rgba(8,116,95,.14)]' : 'border-line'}`
+          return <motion.div key={campaign.id} layout className={`relative shrink-0 ${slot.className}`} animate={{ opacity: slot.opacity }} transition={{ layout: collectionTransition, opacity: collectionTransition }}>
+            <motion.div className="absolute left-0 top-0 h-[184px] w-[198px] origin-top-left" animate={{ scale: slot.scale }} transition={collectionTransition}>
+              {isActive
+                ? <Link to={`/campaigns/${campaign.id}`} aria-label={`Buka ${campaign.title}`} className={`${cardClassName} focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark`}>{cardContent(campaign)}</Link>
+                : <button type="button" aria-label={`Tampilkan ${campaign.title} di tengah`} className={`${cardClassName} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark`} onClick={() => setSelectedIndex(campaignIndex)}>{cardContent(campaign)}</button>}
+            </motion.div>
+          </motion.div>
+        })}
+      </div>
+      <div className="mt-6 flex justify-center px-5 lg:px-8"><ButtonLink to="/campaigns" className="rounded-xl px-7 py-3 text-xs">Lihat Koleksi Selengkapnya</ButtonLink></div>
+    </section>
+  )
+}
+
+function Workflow() {
+  const shouldReduceMotion = useReducedMotion()
+
+  return (
+    <section id="how-it-works" aria-labelledby="workflow-heading" className="border-b-4 border-primary bg-white px-5 py-20 lg:px-8 lg:py-28">
+      <div className="mx-auto max-w-[920px]">
+        <h2 id="workflow-heading" className="ml-3 text-4xl font-medium leading-[.92] tracking-[-.065em] text-ink sm:text-5xl">
+          Alur Kerja<br />
+          <span className="inline-flex items-center gap-2 text-primary"><img src="/logo.svg" alt="" aria-hidden="true" className="h-8 w-auto" />Modalin</span>
+        </h2>
+        <div className="relative mt-10">
+          <ol className="grid w-full grid-cols-4 items-stretch gap-1 sm:gap-3 lg:gap-5" aria-label="Empat tahap alur kerja Modalin">
+            {workflow.map((step, index) => {
+              const Icon = step.icon
+              return <motion.li key={step.title} className="relative min-w-0" initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .45 }} transition={{ delay: shouldReduceMotion ? 0 : index * .06, duration: shouldReduceMotion ? 0 : .36, ease: [0.16, 1, 0.3, 1] }}>
+                <article className="flex h-full min-h-[104px] flex-col items-center justify-center rounded-lg border border-primary/45 bg-white px-1.5 py-4 text-center sm:min-h-[116px] sm:px-3 lg:min-h-[172px] lg:rounded-xl lg:px-5 lg:py-6">
+                  <Icon size={20} className="shrink-0 text-primary-dark sm:h-[22px] sm:w-[22px] lg:h-[25px] lg:w-[25px]" aria-hidden="true" />
+                  <h3 className="mt-2 text-[9px] font-medium leading-[1.15] text-primary-dark sm:text-xs lg:mt-3 lg:text-sm lg:leading-tight">{step.title}</h3>
+                  <p className="mt-2 hidden text-xs leading-5 text-primary-dark/85 lg:block">{step.text}</p>
+                </article>
+                {index < workflow.length - 1 && <ArrowRight size={18} className="absolute left-full top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/45 bg-white p-0.5 text-primary-dark lg:h-6 lg:w-6 lg:p-1" aria-hidden="true" />}
+              </motion.li>
+            })}
+          </ol>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PhoneScene() {
+  const reference = useRef<HTMLDivElement>(null)
+  const isInView = useInView(reference, { amount: 0.28 })
+  const shouldReduceMotion = useReducedMotion()
+  const [isChatVisible, setIsChatVisible] = useState(shouldReduceMotion)
+  const fadeUp = { opacity: 1, y: 0 }
+  const phoneInitial = shouldReduceMotion ? fadeUp : { opacity: 0, y: 32 }
+  const messageInitial = shouldReduceMotion ? fadeUp : { opacity: 0, y: 22 }
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setIsChatVisible(true)
+      return
+    }
+
+    setIsChatVisible(false)
+    if (!isInView) return
+
+    const revealChat = window.setTimeout(() => setIsChatVisible(true), 620)
+    return () => window.clearTimeout(revealChat)
+  }, [isInView, shouldReduceMotion])
+
+  return <div ref={reference} className="problem-phone-scene relative mx-auto mt-14 h-[420px] max-w-[920px] overflow-hidden sm:h-[510px]">
+    <div className="phone-ring phone-ring-one" aria-hidden="true" />
+    <div className="phone-ring phone-ring-two" aria-hidden="true" />
+    <div className="phone-ring phone-ring-three" aria-hidden="true" />
+    <div className="phone-ring phone-ring-four" aria-hidden="true" />
+    <motion.div className="absolute bottom-[-16px] left-1/2 z-10 w-[290px] -translate-x-1/2 sm:w-[340px]" initial={phoneInitial} animate={isInView ? fadeUp : phoneInitial} transition={{ duration: shouldReduceMotion ? 0 : 0.58, ease: [0.16, 1, 0.3, 1] }}>
+      <div className="relative">
+        <img src="/phone.png" alt="" aria-hidden="true" className="w-full" />
+        <motion.div className="absolute left-[15%] top-[20%] w-[70%] rounded-2xl border border-primary-dark/40 bg-white p-3 text-left text-[11px] leading-[1.05] text-primary-dark shadow-sm sm:p-4 sm:text-sm" initial={messageInitial} animate={isChatVisible ? fadeUp : messageInitial} transition={{ duration: shouldReduceMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}>Setiap pesanan memiliki potensi menjadi modal. Sayangnya, potensi itu sering terhenti di percakapan.</motion.div>
+        <motion.span className="absolute right-[11%] top-[52%] rounded-full bg-[#5d34ff] px-4 py-1.5 text-[10px] font-medium text-white shadow-sm sm:text-xs" initial={messageInitial} animate={isChatVisible ? fadeUp : messageInitial} transition={{ delay: isChatVisible && !shouldReduceMotion ? 0.18 : 0, duration: shouldReduceMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}>Percakapan.</motion.span>
+      </div>
+    </motion.div>
+  </div>
+}
+
+export default function LandingPage() {
+  const shouldReduceMotion = useReducedMotion()
+
+
+  return <div className="overflow-hidden bg-white text-ink"><MarketingHeader /><main id="main-content">
+    <section className="bg-white px-5 pb-16 pt-10 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-14"><div className="mx-auto grid max-w-[1120px] items-center gap-12 lg:grid-cols-[.95fr_1.05fr] lg:gap-16">
+      <motion.div initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : .48, ease: [0.16, 1, 0.3, 1] }}><h1 tabIndex={-1} className="max-w-[500px] text-5xl font-medium leading-[.9] tracking-[-.08em] text-black sm:text-6xl lg:text-7xl">Mengubah<br />Ketertarikan<br />Menjadi<br />Modal</h1><div className="mt-9 flex flex-wrap items-center gap-5"><p className="max-w-[184px] text-xs leading-5 text-muted">Tertarik dengan produk tekstil? Langsung saja cek koleksi kami.</p><a href="#collection" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[linear-gradient(120deg,#00b89c_0%,#168cf2_48%,#5d34ff_100%)] px-5 py-2.5 text-xs font-semibold !text-white shadow-[0_8px_20px_rgba(93,52,255,.2)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark">Cek Koleksi <ArrowRight size={15} aria-hidden="true" /></a></div></motion.div>
+      <motion.div className="landing-hero-images relative mx-auto grid w-full max-w-[520px] grid-cols-[.93fr_.74fr] grid-rows-[1fr_.74fr] gap-4 sm:gap-5" initial={shouldReduceMotion ? false : { opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: shouldReduceMotion ? 0 : .08, duration: shouldReduceMotion ? 0 : .56, ease: [0.16, 1, 0.3, 1] }}><img src={registerJavaWeavers} alt="Pengrajin sedang menyiapkan kain tenun" className="aspect-[1.22] h-full w-full object-cover object-[55%_42%]" /><img src={lembataIkat} alt="Pengrajin mengenakan kain tenun" className="aspect-square h-full w-full object-cover object-center" /><span className="hero-orb aspect-square self-center justify-self-center bg-[radial-gradient(circle_at_30%_25%,#866fff,#5d34ff_55%,#3d18ce)] shadow-[0_12px_28px_rgba(93,52,255,.28)]" aria-hidden="true" /><img src={floresWeaver} alt="Pengrajin menenun kain tradisional" className="aspect-[1.55] h-full w-full object-cover object-center" /><span className="hero-orb absolute bottom-[3%] left-[29%] h-20 w-20 bg-[linear-gradient(135deg,#ffd465,#ffb62e)] shadow-[0_10px_24px_rgba(255,182,46,.25)] sm:h-28 sm:w-28" aria-hidden="true" /></motion.div>
+    </div></section>
+    <section id="problem" className="bg-white px-5 pt-14 lg:px-8 lg:pt-20"><div className="mx-auto max-w-[820px] text-center"><h2 className="text-4xl font-medium tracking-[-.07em] text-black sm:text-5xl">Masalah Utama</h2><blockquote className="mt-8 rounded-xl border border-black/10 bg-white px-7 py-8 text-center shadow-[0_3px_5px_rgba(29,37,34,.18)] sm:px-12"><p className="text-base font-semibold leading-6 text-ink sm:text-lg"><span className="mr-7">“</span>Pesanan sebenarnya sudah ada, tapi kami <strong className="text-primary-dark">belum punya modal</strong> untuk mulai membuatnya<span className="ml-7">”</span></p></blockquote></div><PhoneScene /></section>
+    <section className="relative isolate overflow-hidden bg-primary-dark bg-[linear-gradient(120deg,var(--color-primary-dark)_0%,var(--color-primary-dark)_62%,var(--color-primary)_160%)] px-5 py-10 text-white sm:py-14 lg:px-8">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-36 -top-28 h-80 w-80 rounded-full bg-primary/35 blur-3xl sm:h-96 sm:w-96" />
+        <div className="absolute -bottom-44 -right-24 h-80 w-80 rounded-full bg-amber/20 blur-3xl sm:h-96 sm:w-96" />
+        <div className="absolute -bottom-56 left-1/3 h-80 w-80 rounded-full bg-primary-dark/80 blur-3xl" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-[520px]">
+        <h2 className="text-center text-xl font-medium leading-[.98] tracking-[-.05em] sm:text-2xl">Modalin Hadir Untuk Memastikan Setiap Pesanan<br />Memiliki Kesempatan Menjadi Karya Nyata.</h2>
+        <ol className="mx-auto mt-7 grid max-w-[360px] gap-3 sm:mt-9">
+          {[[Tag, 'Temukan', 'Jelajahi koleksi kerajinan tangan dari pengrajin lokal yang telah terverifikasi.'], [ShoppingCart, 'Pre-Order', 'Pesan produk favoritmu sebelum proses produksi dimulai.'], [HandCoins, 'Dukung Produksi', 'Saat target minimum tercapai, pesanan bersama akan menjadi modal produksi bagi pengrajin.']].map(([Icon, title, text], index) => {
+            const StepIcon = Icon as typeof Tag
+            const offsetClass = index === 0 ? 'ml-0' : index === 1 ? 'ml-10' : 'ml-20'
+            return <li key={title as string} className={`grid grid-cols-[1.75rem_minmax(0,1fr)] items-center gap-3 ${offsetClass}`}>
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[10px] font-bold text-primary-dark">{index + 1}</span>
+              <article className="grid min-h-[58px] grid-cols-[3rem_1fr] items-center rounded-lg bg-white py-2 text-primary-dark shadow-[0_5px_10px_rgba(0,74,60,.18)]">
+                <div className="grid h-full place-items-center border-r border-primary-dark/25"><StepIcon size={18} strokeWidth={1.8} aria-hidden="true" /></div>
+                <div className="px-3"><h3 className="text-xs font-medium">{title as string}</h3><p className="mt-0.5 text-[8px] leading-[1.15] text-primary-dark/80">{text as string}</p></div>
+              </article>
+            </li>
+          })}
+        </ol>
+      </div>
+    </section>
+    <CollectionPreview />
+    <Workflow />
+  </main><footer className="bg-primary-dark bg-[linear-gradient(to_bottom,rgba(255,255,255,0.10)_0,transparent_0.5rem)] px-5 py-12 text-white lg:px-8 lg:py-16"><div className="mx-auto flex max-w-[1120px] flex-col justify-between gap-9 sm:flex-row sm:items-center"><div><div className="flex items-center gap-2"><img src="/logo.svg" alt="" aria-hidden="true" className="h-7 w-auto brightness-0 invert" /><span className="text-xl font-medium tracking-[-.05em]">Modalin</span></div><p className="mt-1 text-[10px] text-white/80">Mengubah Ketertarikan Menjadi Modal</p></div><address className="not-italic text-left text-xs leading-5 text-white/80 sm:text-right"><a href="tel:+62888163519" className="block hover:text-white">+628 8816 3519</a><a href="mailto:info@contact.modalin" className="block hover:text-white">info@contact.modalin</a></address></div></footer></div>
+}
