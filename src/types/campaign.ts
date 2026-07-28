@@ -75,6 +75,12 @@ export interface PreorderInput {
 
 export interface PreorderResult {
   id: string
+  redirectUrl: string | null
+  paymentRequiresReview: boolean
+}
+
+export interface OrderPaymentResult {
+  id: string
   redirectUrl: string
 }
 export type OrderStatus = 'CONDITIONAL' | 'CONFIRMED' | 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED'
@@ -89,7 +95,8 @@ export interface OrderHistoryItem {
   paymentStatus: OrderPaymentStatus
   shippingStatus: OrderShippingStatus
   trackingNumber: string | null
-  paymentUrl: string | null
+  canContinuePayment: boolean
+  paymentRequiresReview: boolean
   campaign: {
     id: string
     slug: string

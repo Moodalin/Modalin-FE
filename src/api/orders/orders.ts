@@ -1,6 +1,6 @@
 import { apiClient, type ApiSuccess } from '@/config/api-client'
 import { ApiPaths } from '@/constants/api'
-import type { OrderHistoryItem, PreorderInput, PreorderResult } from '@/types/campaign'
+import type { OrderHistoryItem, OrderPaymentResult, PreorderInput, PreorderResult } from '@/types/campaign'
 
 export async function createPreorder(campaignId: string, input: PreorderInput): Promise<ApiSuccess<PreorderResult>> {
   return apiClient.post<ApiSuccess<PreorderResult>>(ApiPaths.preorder(campaignId), {
@@ -19,5 +19,10 @@ export async function createPreorder(campaignId: string, input: PreorderInput): 
 
 export async function getOrderHistory(signal?: AbortSignal): Promise<OrderHistoryItem[]> {
   const response = await apiClient.get<ApiSuccess<OrderHistoryItem[]>>(ApiPaths.orderHistory, { signal })
+  return response.data
+}
+
+export async function continueOrderPayment(orderId: string): Promise<OrderPaymentResult> {
+  const response = await apiClient.post<ApiSuccess<OrderPaymentResult>>(ApiPaths.orderPayment(orderId))
   return response.data
 }

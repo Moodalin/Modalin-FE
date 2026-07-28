@@ -3,6 +3,7 @@ export const ApiPaths = {
   campaigns: '/api/campaigns',
   preorder: (identifier: string) => `/api/campaigns/${identifier}/preorders`,
   orderHistory: '/api/orders/me',
+  orderPayment: (orderId: string) => `/api/orders/${orderId}/payment`,
   dashboard: '/api/dashboard',
   milestone: (milestoneId: string) => `/api/production/milestones/${milestoneId}`,
   expense: (costItemId: string) => `/api/production/expenses/${costItemId}`,

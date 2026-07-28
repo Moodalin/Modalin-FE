@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, PackageOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { getOrderHistory } from '@/api/orders/orders'
+import { continueOrderPayment, getOrderHistory } from '@/api/orders/orders'
 import { MarketingHeader } from '@/components/layout/marketing'
 import { Button } from '@/components/ui/button'
 import { getApiErrorMessage } from '@/config/api-error'
@@ -65,16 +65,11 @@ export default function OrdersPage() {
     if (continuingPaymentId) return
     setContinuingPaymentId(order.id)
     try {
-      const currentOrders = await getOrderHistory()
-      setOrders(currentOrders)
-      const currentOrder = currentOrders.find((candidate) => candidate.id === order.id)
-      if (currentOrder?.paymentStatus !== 'PENDING' || !currentOrder.paymentUrl) {
-        toast({ message: 'Status pembayaran pesanan ini telah diperbarui.', variant: 'success' })
-        return
-      }
-      window.location.assign(currentOrder.paymentUrl)
+      const payment = await continueOrderPayment(order.id)
+      window.location.assign(payment.redirectUrl)
     } catch (caught) {
-      toast({ message: getApiErrorMessage(caught, 'Status pembayaran tidak dapat diperiksa. Coba lagi.'), variant: 'error' })
+      toast({ message: getApiErrorMessage(caught, 'Pembayaran tidak dapat dilanjutkan. Coba lagi.'), variant: 'error' })
+      setRequest((current) => current + 1)
     } finally {
       setContinuingPaymentId('')
     }
@@ -119,7 +114,8 @@ export default function OrdersPage() {
                   <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pengiriman</dt><dd className="font-bold text-ink">{shippingStatusLabels[order.shippingStatus]}</dd></div>
                   {order.trackingNumber && <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Nomor resi</dt><dd className="break-all font-bold text-ink">{order.trackingNumber}</dd></div>}
                 </dl>
-                {order.paymentStatus === 'PENDING' && order.paymentUrl && <Button type="button" className="mt-5 w-full sm:w-auto" disabled={continuingPaymentId === order.id} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Memeriksa pembayaran…' : 'Lanjutkan pembayaran'}</Button>}
+                {order.canContinuePayment && <Button type="button" className="mt-5 w-full sm:w-auto" disabled={continuingPaymentId === order.id} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Menyiapkan pembayaran…' : 'Lanjutkan pembayaran'}</Button>}
+                {order.paymentRequiresReview && <p className="mt-5 text-sm leading-6 text-muted">Status pembayaran sedang diperiksa. Jangan membuat pembayaran baru untuk pesanan ini.</p>}
               </div>
             </div>
           </article>

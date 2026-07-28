@@ -124,7 +124,12 @@ export default function CheckoutPage() {
         phone,
         address: shippingAddress,
       })
-      window.location.assign(response.data.redirectUrl)
+      if (response.data.redirectUrl) {
+        window.location.assign(response.data.redirectUrl)
+        return
+      }
+      toast({ message: response.data.paymentRequiresReview ? 'Pesanan tersimpan. Status pembayaran sedang diperiksa.' : 'Pesanan tersimpan. Lanjutkan pembayaran dari riwayat pesanan.', variant: 'success' })
+      navigate('/orders', { replace: true })
     } catch (caught) {
       const message = getApiErrorMessage(caught, 'Tidak dapat membuat pesanan. Periksa detail lalu coba lagi.')
       setError(message)

@@ -84,7 +84,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 }
 
 export function AuthFooter({ mode }: { mode: AuthMode }) {
-  return <p className="text-center text-sm text-muted">{mode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?'} <Link className="font-extrabold text-primary-dark hover:underline" to={mode === 'login' ? '/register' : '/login'}>{mode === 'login' ? 'Daftar' : 'Masuk'}</Link></p>
+  const location = useLocation()
+  const returnTo = new URLSearchParams(location.search).get('returnTo')
+  const authPath = mode === 'login' ? '/register' : '/login'
+  const destination = returnTo ? `${authPath}?returnTo=${encodeURIComponent(returnTo)}` : authPath
+  return <p className="text-center text-sm text-muted">{mode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?'} <Link className="font-extrabold text-primary-dark hover:underline" to={destination}>{mode === 'login' ? 'Daftar' : 'Masuk'}</Link></p>
 }
 
 export function LoginPage() { return <AuthShell mode="login" footer={<AuthFooter mode="login" />}><AuthForm mode="login" /></AuthShell> }

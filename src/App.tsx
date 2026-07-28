@@ -46,7 +46,7 @@ export default function App() {
             <Route path="/campaigns" element={<CampaignCollectionPage />} />
             <Route path="/campaigns/:campaignId" element={<CampaignPublicPage />} />
             <Route path="/campaigns/new" element={<ArtisanRoute><CampaignBuilderPage /></ArtisanRoute>} />
-            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ArtisanRoute><DashboardPage /></ArtisanRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
