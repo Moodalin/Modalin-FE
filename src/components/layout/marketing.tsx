@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/components/ui/utils'
 
 export function BrandMark({ inverse = false }: { inverse?: boolean }) {
-  return <Link to="/" className={cn('inline-flex items-center gap-2 text-[17px] font-bold tracking-[-.05em] text-[#00B28F]', inverse && 'text-white')} aria-label="Beranda Modalin"><img src="/logo.svg" alt="" className={cn('h-6 w-auto', inverse && 'brightness-0 invert')} />Modalin</Link>
+  return <Link to="/" className="inline-flex items-center gap-2 text-[17px] font-bold tracking-[-.05em]" aria-label="Beranda Modalin"><img src="/logo.svg" alt="" className={cn('h-6 w-auto', inverse && 'brightness-0 invert')} /><span style={{ color: inverse ? '#FFFFFF' : '#00B28F' }}>Modalin</span></Link>
 }
 
 export function Avatar({ image, name, className }: { image?: string | null; name: string; className?: string }) {

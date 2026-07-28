@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { ArrowLeft, PackageOpen } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, CreditCard, PackageCheck, PackageOpen, Truck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { continueOrderPayment, getOrderHistory } from '@/api/orders/orders'
 import { MarketingHeader } from '@/components/layout/marketing'
@@ -45,6 +45,8 @@ export default function OrdersPage() {
   const [error, setError] = useState('')
   const [request, setRequest] = useState(0)
   const [continuingPaymentId, setContinuingPaymentId] = useState('')
+  const [visibleCount, setVisibleCount] = useState(10)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -60,6 +62,20 @@ export default function OrdersPage() {
       })
     return () => controller.abort()
   }, [request])
+
+  useEffect(() => {
+    setVisibleCount(10)
+  }, [orders])
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current
+    if (!sentinel || visibleCount >= orders.length) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) setVisibleCount((current) => Math.min(current + 10, orders.length))
+    }, { rootMargin: '240px' })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [orders.length, visibleCount])
 
   const continuePayment = async (order: OrderHistoryItem) => {
     if (continuingPaymentId) return
@@ -88,41 +104,52 @@ export default function OrdersPage() {
       {!loading && error && <div className="mt-6 rounded-2xl border border-error/30 bg-white px-5 py-6 sm:flex sm:items-center sm:justify-between sm:gap-6"><p role="alert" className="text-sm font-semibold text-error">{error}</p><Button type="button" variant="outline" className="mt-4 w-full sm:mt-0 sm:w-auto" onClick={() => setRequest((current) => current + 1)}>Coba lagi</Button></div>}
       {!loading && !error && orders.length === 0 && <div className="mt-6 px-5 py-12 text-center"><PackageOpen size={28} aria-hidden="true" className="mx-auto text-stone" /><p className="mt-3 text-sm font-semibold text-muted">Belum ada pesanan di akun ini.</p></div>}
       {!loading && !error && orders.length > 0 && <ol className="mt-6 grid gap-4">
-        {orders.map((order) => <li key={order.id}>
-          <article aria-labelledby={`order-${order.id}-title`} className="overflow-hidden rounded-2xl border border-line bg-white">
-            <div className="flex flex-col gap-3 border-b border-line bg-cotton/70 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-              <div className="min-w-0">
-                <h2 id={`order-${order.id}-title`} className="text-base font-extrabold tracking-[-.02em] text-ink">{order.campaign.title}</h2>
-                <p className="mt-1 text-xs font-semibold text-muted"><time dateTime={order.createdAt}>{formatOrderDate(order.createdAt)}</time></p>
-              </div>
-              <p className="shrink-0 text-base font-extrabold text-ink">{formatRupiah(order.totalIdr)}</p>
-            </div>
-            <div className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,.75fr)] lg:gap-8">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[.1em] text-muted">Item pesanan</p>
-                <ul className="mt-3 grid gap-2">
-                  {order.items.map((item) => <li key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                    <p className="min-w-0 font-semibold leading-5 text-ink"><span>{item.quantity} × {item.productName}</span>{item.variantLabel && <span className="block text-xs font-normal text-muted">{item.variantLabel}</span>}</p>
-                    <p className="shrink-0 font-bold text-ink">{formatRupiah(item.unitPriceIdr * item.quantity)}</p>
-                  </li>)}
-                </ul>
-              </div>
-              <div className="border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                <dl className="grid gap-3 text-sm">
-                  <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Status pesanan</dt><dd className="font-bold text-ink">{orderStatusLabels[order.status]}</dd></div>
-                  <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pembayaran</dt><dd className="font-bold text-ink">{order.paymentRequiresReview ? 'Pembayaran sedang diperiksa' : paymentStatusLabels[order.paymentStatus]}</dd></div>
-                  <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pengiriman</dt><dd className="font-bold text-ink">{shippingStatusLabels[order.shippingStatus]}</dd></div>
-                  {order.trackingNumber && <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Nomor resi</dt><dd className="break-all font-bold text-ink">{order.trackingNumber}</dd></div>}
-                </dl>
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  {order.canContinuePayment && !order.paymentRequiresReview && <Button type="button" className="w-full sm:w-auto" disabled={Boolean(continuingPaymentId)} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Menyiapkan pembayaran…' : 'Bayar sekarang'}</Button>
-                  <ButtonLink to={`/campaigns/${order.campaign.slug}`} variant="outline" className="w-full sm:w-auto">Lihat kampanye</ButtonLink>
+        {orders.slice(0, visibleCount).map((order) => {
+          const paymentLabel = order.paymentRequiresReview ? 'Pembayaran diperiksa' : paymentStatusLabels[order.paymentStatus]
+          const paymentTone = order.paymentRequiresReview || order.paymentStatus === 'PENDING' ? 'border-amber/45 bg-amber/15 text-[#7A5100]' : order.paymentStatus === 'PAID' ? 'border-primary/30 bg-primary/10 text-primary-dark' : 'border-error/25 bg-error/5 text-error'
+          return <li key={order.id}>
+            <article aria-labelledby={`order-${order.id}-title`} className="overflow-hidden rounded-3xl border border-line bg-white shadow-[0_14px_34px_rgba(29,37,34,.07)]">
+              <header className="flex flex-col gap-5 border-b border-line bg-[linear-gradient(135deg,#ffffff_0%,#f6fbf9_100%)] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-6">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted">Pesanan · <time dateTime={order.createdAt}>{formatOrderDate(order.createdAt)}</time></p>
+                  <h2 id={`order-${order.id}-title`} className="mt-2 text-xl font-extrabold tracking-[-.03em] text-ink sm:text-2xl">{order.campaign.title}</h2>
+                  <span className={`mt-3 inline-flex rounded-full border px-3 py-1.5 text-xs font-extrabold ${paymentTone}`}>{paymentLabel}</span>
                 </div>
-                {order.paymentRequiresReview && <p className="mt-5 text-sm leading-6 text-muted">Status pembayaran sedang diperiksa. Jangan membuat pembayaran baru untuk pesanan ini.</p>}
+                <div className="shrink-0 sm:text-right">
+                  <p className="text-xs font-semibold text-muted">Total pembayaran</p>
+                  <p className="mt-1 text-2xl font-extrabold tracking-[-.04em] text-primary-dark">{formatRupiah(order.totalIdr)}</p>
+                </div>
+              </header>
+              <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,.9fr)] lg:gap-7">
+                <section aria-labelledby={`order-${order.id}-items`} className="rounded-2xl border border-line bg-cream/50 p-4 sm:p-5">
+                  <h3 id={`order-${order.id}-items`} className="text-xs font-extrabold uppercase tracking-[.1em] text-muted">{order.items.length} item pesanan</h3>
+                  <ul className="mt-3 divide-y divide-line">
+                    {order.items.map((item) => <li key={item.id} className="flex items-start justify-between gap-4 py-3 first:pt-1 last:pb-1">
+                      <div className="flex min-w-0 gap-3">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-dark text-xs font-extrabold text-white">{item.quantity}×</span>
+                        <p className="min-w-0 text-sm font-bold leading-5 text-ink">{item.productName}{item.variantLabel && <span className="block text-xs font-normal text-muted">{item.variantLabel}</span>}</p>
+                      </div>
+                      <p className="shrink-0 text-sm font-extrabold text-ink">{formatRupiah(item.unitPriceIdr * item.quantity)}</p>
+                    </li>)}
+                  </ul>
+                </section>
+                <div>
+                  <dl className="grid gap-3">
+                    <div className="flex items-center gap-3 rounded-xl border border-line p-3.5"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary-dark"><PackageCheck size={18} aria-hidden="true" /></span><div><dt className="text-xs font-semibold text-muted">Status pesanan</dt><dd className="mt-0.5 text-sm font-extrabold text-ink">{orderStatusLabels[order.status]}</dd></div></div>
+                    <div className="flex items-center gap-3 rounded-xl border border-line p-3.5"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary-dark"><CreditCard size={18} aria-hidden="true" /></span><div><dt className="text-xs font-semibold text-muted">Pembayaran</dt><dd className="mt-0.5 text-sm font-extrabold text-ink">{paymentLabel}</dd></div></div>
+                    <div className="flex items-center gap-3 rounded-xl border border-line p-3.5"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary-dark"><Truck size={18} aria-hidden="true" /></span><div><dt className="text-xs font-semibold text-muted">Pengiriman</dt><dd className="mt-0.5 text-sm font-extrabold text-ink">{shippingStatusLabels[order.shippingStatus]}</dd>{order.trackingNumber && <p className="mt-1 break-all text-xs text-muted">Resi: {order.trackingNumber}</p>}</div></div>
+                  </dl>
+                  {order.paymentRequiresReview && <p className="mt-4 rounded-xl bg-amber/15 p-3 text-xs font-semibold leading-5 text-[#7A5100]">Status pembayaran sedang diperiksa. Jangan membuat pembayaran baru.</p>}
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                    {order.canContinuePayment && !order.paymentRequiresReview && <Button type="button" className="w-full sm:w-auto" disabled={Boolean(continuingPaymentId)} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Menyiapkan pembayaran…' : 'Bayar sekarang'}</Button>}
+                    <ButtonLink to={`/campaigns/${order.campaign.slug}`} variant="outline" className="w-full sm:w-auto">Lihat kampanye</ButtonLink>
+                  </div>
+                </div>
               </div>
-            </div>
-          </article>
-        </li>)}
+            </article>
+          </li>
+        })}
+        {visibleCount < orders.length && <li aria-hidden="true"><div ref={loadMoreRef} className="h-8" /></li>}
       </ol>}
     </main>
   </div>
