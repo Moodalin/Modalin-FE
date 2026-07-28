@@ -3,7 +3,7 @@ import { ArrowLeft, PackageOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { continueOrderPayment, getOrderHistory } from '@/api/orders/orders'
 import { MarketingHeader } from '@/components/layout/marketing'
-import { Button } from '@/components/ui/button'
+import { Button, ButtonLink } from '@/components/ui/button'
 import { getApiErrorMessage } from '@/config/api-error'
 import { formatRupiah } from '@/config/format'
 import { useToast } from '@/hooks/use-toast'
@@ -80,7 +80,7 @@ export default function OrdersPage() {
     <main id="main-content" className="mx-auto max-w-[1120px] px-5 py-8 sm:py-12 lg:px-8">
       <Link to="/profile" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-primary-dark hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark"><ArrowLeft size={17} aria-hidden="true" />Kembali ke profil</Link>
       <div className="mt-6 flex flex-col justify-between gap-3 border-b border-line pb-6 sm:flex-row sm:items-end">
-        <h1 className="font-display text-3xl font-extrabold tracking-[-.04em] text-ink sm:text-4xl">Riwayat pesanan</h1>
+        <h1 tabIndex={-1} className="font-display text-3xl font-extrabold tracking-[-.04em] text-ink outline-none sm:text-4xl">Riwayat pesanan</h1>
         {!loading && !error && orders.length > 0 && <p className="text-sm font-bold text-muted">{orders.length} pesanan</p>}
       </div>
 
@@ -92,7 +92,7 @@ export default function OrdersPage() {
           <article aria-labelledby={`order-${order.id}-title`} className="overflow-hidden rounded-2xl border border-line bg-white">
             <div className="flex flex-col gap-3 border-b border-line bg-cotton/70 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
               <div className="min-w-0">
-                <h2 id={`order-${order.id}-title`} className="text-base font-extrabold tracking-[-.02em] text-ink"><Link to={`/campaigns/${order.campaign.slug}`} className="hover:text-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark">{order.campaign.title}</Link></h2>
+                <h2 id={`order-${order.id}-title`} className="text-base font-extrabold tracking-[-.02em] text-ink">{order.campaign.title}</h2>
                 <p className="mt-1 text-xs font-semibold text-muted"><time dateTime={order.createdAt}>{formatOrderDate(order.createdAt)}</time></p>
               </div>
               <p className="shrink-0 text-base font-extrabold text-ink">{formatRupiah(order.totalIdr)}</p>
@@ -110,11 +110,14 @@ export default function OrdersPage() {
               <div className="border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
                 <dl className="grid gap-3 text-sm">
                   <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Status pesanan</dt><dd className="font-bold text-ink">{orderStatusLabels[order.status]}</dd></div>
-                  <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pembayaran</dt><dd className="font-bold text-ink">{paymentStatusLabels[order.paymentStatus]}</dd></div>
+                  <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pembayaran</dt><dd className="font-bold text-ink">{order.paymentRequiresReview ? 'Pembayaran sedang diperiksa' : paymentStatusLabels[order.paymentStatus]}</dd></div>
                   <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Pengiriman</dt><dd className="font-bold text-ink">{shippingStatusLabels[order.shippingStatus]}</dd></div>
                   {order.trackingNumber && <div className="grid grid-cols-[7.5rem_1fr] gap-3"><dt className="text-muted">Nomor resi</dt><dd className="break-all font-bold text-ink">{order.trackingNumber}</dd></div>}
                 </dl>
-                {order.canContinuePayment && <Button type="button" className="mt-5 w-full sm:w-auto" disabled={continuingPaymentId === order.id} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Menyiapkan pembayaran…' : 'Lanjutkan pembayaran'}</Button>}
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  {order.canContinuePayment && !order.paymentRequiresReview && <Button type="button" className="w-full sm:w-auto" disabled={Boolean(continuingPaymentId)} loading={continuingPaymentId === order.id} onClick={() => continuePayment(order)}>{continuingPaymentId === order.id ? 'Menyiapkan pembayaran…' : 'Bayar sekarang'}</Button>
+                  <ButtonLink to={`/campaigns/${order.campaign.slug}`} variant="outline" className="w-full sm:w-auto">Lihat kampanye</ButtonLink>
+                </div>
                 {order.paymentRequiresReview && <p className="mt-5 text-sm leading-6 text-muted">Status pembayaran sedang diperiksa. Jangan membuat pembayaran baru untuk pesanan ini.</p>}
               </div>
             </div>

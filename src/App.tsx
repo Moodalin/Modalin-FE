@@ -8,7 +8,6 @@ import { useRouteFocus } from '@/hooks/use-route-focus'
 
 const LandingPage = lazy(() => import('@/pages/landing'))
 const ForCreatorPage = lazy(() => import('@/pages/for-creator'))
-const FaqPage = lazy(() => import('@/pages/faq'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
 const OnboardingPage = lazy(() => import('@/pages/onboarding'))
@@ -37,7 +36,6 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/for-creator" element={<ForCreatorPage />} />
-            <Route path="/faq" element={<FaqPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />

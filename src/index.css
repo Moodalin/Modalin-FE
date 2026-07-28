@@ -40,7 +40,6 @@ button { cursor: pointer; }
 .skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 100; background: var(--color-ink); color: white; padding: .75rem 1rem; font-size: .875rem; font-weight: 800; transition: top .2s ease; }
 .skip-link:focus { top: 1rem; }
 .font-display { font-family: "Google Sans Flex", ui-sans-serif, system-ui, sans-serif; }
-.landing-hero-images > img { border-radius: 1.25rem; }
 .hero-orb { border-radius: 38%; }
 .faq-hero-images > img { border-radius: 1.25rem !important; }
 .faq-hero-images > .hero-orb { border-radius: 1.25rem; }

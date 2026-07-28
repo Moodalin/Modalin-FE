@@ -1,10 +1,7 @@
 import { ArrowRight, HandCoins, PackageCheck, PenLine, ShoppingBag, ShoppingCart, Tag, Truck } from 'lucide-react'
-import { motion, type Transition, useInView, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, type Transition, useInView, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
-import floresWeaver from '@/assets/textiles/flores-weaver.jpg'
-import lembataIkat from '@/assets/textiles/lembata-ikat.jpg'
-import registerJavaWeavers from '@/assets/textiles/register-java-weavers.jpg'
 import { MarketingHeader } from '@/components/layout/marketing'
 import { CampaignCollectionLoading } from '@/components/campaign/campaign-loading'
 import { ButtonLink } from '@/components/ui/button'
@@ -15,6 +12,12 @@ const workflow = [
   { icon: ShoppingBag, title: 'Target Tercapai', text: 'Target pre-order terpenuhi, produksi siap dimulai.' },
   { icon: PackageCheck, title: 'Proses Produksi', text: 'Pengrajin mulai membuat pesanan secara bertahap.' },
   { icon: Truck, title: 'Pengiriman', text: 'Pesanan selesai dan dikirim ke pelanggan.' },
+]
+
+const problems = [
+  <>Pesanan sebenarnya sudah ada, tapi kami <strong className="text-primary-dark">belum punya modal</strong> untuk mulai membuatnya</>,
+  <>Kalau ada modal untuk bahan, <strong className="text-primary-dark">pesanan ini sudah bisa kami kerjakan</strong></>,
+  <>Saya sering menerima pesan, <strong className="text-primary-dark">“Kalau dibuat lagi saya mau pesan.”</strong> Tapi tanpa modal, saya belum bisa membuatnya.</>,
 ]
 
 function CollectionPreview() {
@@ -111,6 +114,24 @@ function Workflow() {
   )
 }
 
+function ProblemStatement() {
+  const shouldReduceMotion = useReducedMotion()
+  const [problemIndex, setProblemIndex] = useState(0)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setProblemIndex((current) => (current + 1) % problems.length), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [problemIndex])
+
+  return <blockquote className="mt-8 flex min-h-[112px] items-center justify-center rounded-xl border border-black/10 bg-white px-7 py-8 text-center shadow-[0_3px_5px_rgba(29,37,34,.18)] sm:px-12">
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.p key={problemIndex} className="text-base font-semibold leading-6 text-ink sm:text-lg" initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={shouldReduceMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: shouldReduceMotion ? 0 : .25 }}>
+        <span aria-hidden="true">“</span>{problems[problemIndex]}<span aria-hidden="true">”</span>
+      </motion.p>
+    </AnimatePresence>
+  </blockquote>
+}
+
 function PhoneScene() {
   const reference = useRef<HTMLDivElement>(null)
   const isInView = useInView(reference, { amount: 0.28 })
@@ -155,26 +176,21 @@ export default function LandingPage() {
   return <div className="overflow-hidden bg-white text-ink"><MarketingHeader /><main id="main-content">
     <section className="bg-white px-5 pb-16 pt-10 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-14"><div className="mx-auto grid max-w-[1120px] items-center gap-12 lg:grid-cols-[.95fr_1.05fr] lg:gap-16">
       <motion.div initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : .48, ease: [0.16, 1, 0.3, 1] }}><h1 tabIndex={-1} className="max-w-[500px] text-5xl font-medium leading-[.9] tracking-[-.08em] text-black sm:text-6xl lg:text-7xl">Mengubah<br />Ketertarikan<br />Menjadi<br />Modal</h1><div className="mt-9 flex flex-wrap items-center gap-5"><p className="max-w-[184px] text-xs leading-5 text-muted">Tertarik dengan produk tekstil? Langsung saja cek koleksi kami.</p><a href="#collection" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[linear-gradient(120deg,#00b89c_0%,#168cf2_48%,#5d34ff_100%)] px-5 py-2.5 text-xs font-semibold !text-white shadow-[0_8px_20px_rgba(93,52,255,.2)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark">Cek Koleksi <ArrowRight size={15} aria-hidden="true" /></a></div></motion.div>
-      <motion.div className="landing-hero-images relative mx-auto grid w-full max-w-[520px] grid-cols-[.93fr_.74fr] grid-rows-[1fr_.74fr] gap-4 sm:gap-5" initial={shouldReduceMotion ? false : { opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: shouldReduceMotion ? 0 : .08, duration: shouldReduceMotion ? 0 : .56, ease: [0.16, 1, 0.3, 1] }}><img src={registerJavaWeavers} alt="Pengrajin sedang menyiapkan kain tenun" className="aspect-[1.22] h-full w-full object-cover object-[55%_42%]" /><img src={lembataIkat} alt="Pengrajin mengenakan kain tenun" className="aspect-square h-full w-full object-cover object-center" /><span className="hero-orb aspect-square self-center justify-self-center bg-[radial-gradient(circle_at_30%_25%,#866fff,#5d34ff_55%,#3d18ce)] shadow-[0_12px_28px_rgba(93,52,255,.28)]" aria-hidden="true" /><img src={floresWeaver} alt="Pengrajin menenun kain tradisional" className="aspect-[1.55] h-full w-full object-cover object-center" /><span className="hero-orb absolute bottom-[3%] left-[29%] h-20 w-20 bg-[linear-gradient(135deg,#ffd465,#ffb62e)] shadow-[0_10px_24px_rgba(255,182,46,.25)] sm:h-28 sm:w-28" aria-hidden="true" /></motion.div>
+      <motion.div className="relative mx-auto aspect-[1.25] w-full max-w-[520px]" initial={shouldReduceMotion ? false : { opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: shouldReduceMotion ? 0 : .08, duration: shouldReduceMotion ? 0 : .56, ease: [0.16, 1, 0.3, 1] }}><img src="/hero/1.png" alt="Pengrajin sedang menjahit kain" className="absolute left-[7%] top-0 w-[56%]" /><img src="/hero/2.png" alt="Pengrajin sedang membatik" className="absolute right-[3%] top-0 w-[34%]" /><img src="/hero/3.png" alt="Pengrajin lansia sedang membatik" className="absolute right-[3%] top-[43%] w-[57%]" /><span className="hero-orb absolute left-[3%] top-[38%] h-[22%] w-[17%] bg-[radial-gradient(circle_at_30%_25%,#866fff,#5d34ff_55%,#3d18ce)] shadow-[0_12px_28px_rgba(93,52,255,.28)]" aria-hidden="true" /><span className="hero-orb absolute bottom-[9%] left-[24%] h-[23%] w-[16%] bg-[linear-gradient(135deg,#ffd465,#ffb62e)] shadow-[0_10px_24px_rgba(255,182,46,.25)]" aria-hidden="true" /><span className="hero-orb absolute bottom-[1%] right-[26%] h-[24%] w-[19%] bg-[linear-gradient(135deg,#00c7a3,#00a98c)] shadow-[0_10px_24px_rgba(0,178,143,.22)]" aria-hidden="true" /></motion.div>
     </div></section>
-    <section id="problem" className="bg-white px-5 pt-14 lg:px-8 lg:pt-20"><div className="mx-auto max-w-[820px] text-center"><h2 className="text-4xl font-medium tracking-[-.07em] text-black sm:text-5xl">Masalah Utama</h2><blockquote className="mt-8 rounded-xl border border-black/10 bg-white px-7 py-8 text-center shadow-[0_3px_5px_rgba(29,37,34,.18)] sm:px-12"><p className="text-base font-semibold leading-6 text-ink sm:text-lg"><span className="mr-7">“</span>Pesanan sebenarnya sudah ada, tapi kami <strong className="text-primary-dark">belum punya modal</strong> untuk mulai membuatnya<span className="ml-7">”</span></p></blockquote></div><PhoneScene /></section>
-    <section className="relative isolate overflow-hidden bg-primary-dark bg-[linear-gradient(120deg,var(--color-primary-dark)_0%,var(--color-primary-dark)_62%,var(--color-primary)_160%)] px-5 py-10 text-white sm:py-14 lg:px-8">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-36 -top-28 h-80 w-80 rounded-full bg-primary/35 blur-3xl sm:h-96 sm:w-96" />
-        <div className="absolute -bottom-44 -right-24 h-80 w-80 rounded-full bg-amber/20 blur-3xl sm:h-96 sm:w-96" />
-        <div className="absolute -bottom-56 left-1/3 h-80 w-80 rounded-full bg-primary-dark/80 blur-3xl" />
-      </div>
-      <div className="relative z-10 mx-auto max-w-[520px]">
-        <h2 className="text-center text-xl font-medium leading-[.98] tracking-[-.05em] sm:text-2xl">Modalin Hadir Untuk Memastikan Setiap Pesanan<br />Memiliki Kesempatan Menjadi Karya Nyata.</h2>
-        <ol className="mx-auto mt-7 grid max-w-[360px] gap-3 sm:mt-9">
+    <section id="problem" className="bg-white px-5 pt-14 lg:px-8 lg:pt-20"><div className="mx-auto max-w-[820px] text-center"><h2 className="text-4xl font-medium tracking-[-.07em] text-black sm:text-5xl">Masalah Utama</h2><ProblemStatement /></div><PhoneScene /></section>
+    <section className="bg-primary-dark px-5 py-20 text-white sm:py-24 lg:px-8 lg:py-28">
+      <div className="mx-auto max-w-[720px]">
+        <h2 className="text-center text-2xl font-medium leading-tight tracking-[-.05em] sm:text-3xl">Modalin Hadir Untuk Memastikan Setiap Pesanan<br />Memiliki Kesempatan Menjadi Karya Nyata.</h2>
+        <ol className="mx-auto mt-10 grid max-w-[580px] gap-5 sm:mt-12">
           {[[Tag, 'Temukan', 'Jelajahi koleksi kerajinan tangan dari pengrajin lokal yang telah terverifikasi.'], [ShoppingCart, 'Pre-Order', 'Pesan produk favoritmu sebelum proses produksi dimulai.'], [HandCoins, 'Dukung Produksi', 'Saat target minimum tercapai, pesanan bersama akan menjadi modal produksi bagi pengrajin.']].map(([Icon, title, text], index) => {
             const StepIcon = Icon as typeof Tag
-            const offsetClass = index === 0 ? 'ml-0' : index === 1 ? 'ml-10' : 'ml-20'
-            return <li key={title as string} className={`grid grid-cols-[1.75rem_minmax(0,1fr)] items-center gap-3 ${offsetClass}`}>
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[10px] font-bold text-primary-dark">{index + 1}</span>
-              <article className="grid min-h-[58px] grid-cols-[3rem_1fr] items-center rounded-lg bg-white py-2 text-primary-dark shadow-[0_5px_10px_rgba(0,74,60,.18)]">
-                <div className="grid h-full place-items-center border-r border-primary-dark/25"><StepIcon size={18} strokeWidth={1.8} aria-hidden="true" /></div>
-                <div className="px-3"><h3 className="text-xs font-medium">{title as string}</h3><p className="mt-0.5 text-[8px] leading-[1.15] text-primary-dark/80">{text as string}</p></div>
+            const offsetClass = index === 0 ? 'mr-10 sm:mr-20' : index === 1 ? 'mx-5 sm:mx-10' : 'ml-10 sm:ml-20'
+            return <li key={title as string} className={`grid grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-4 ${offsetClass}`}>
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-bold text-primary-dark">{index + 1}</span>
+              <article className="grid min-h-[88px] grid-cols-[4.5rem_1fr] items-center rounded-xl bg-white py-3 text-primary-dark shadow-[0_8px_18px_rgba(0,45,37,.2)] sm:min-h-[100px]">
+                <div className="grid h-full place-items-center border-r border-primary-dark/25"><StepIcon size={26} strokeWidth={1.8} aria-hidden="true" /></div>
+                <div className="px-5"><h3 className="text-base font-medium">{title as string}</h3><p className="mt-1 text-xs leading-4 text-primary-dark/80">{text as string}</p></div>
               </article>
             </li>
           })}

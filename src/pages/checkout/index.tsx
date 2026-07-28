@@ -154,7 +154,7 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.78fr)] lg:items-start">
-        <form id="checkout-form" noValidate onSubmit={submit} aria-busy={pending} className="order-2 min-w-0 rounded-2xl border border-line bg-white p-5 shadow-[0_16px_38px_rgba(29,37,34,.05)] sm:p-7 lg:order-1 lg:p-8">
+        <form id="checkout-form" noValidate onSubmit={submit} aria-busy={pending} className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-[0_16px_38px_rgba(29,37,34,.05)] sm:p-7 lg:p-8">
           <fieldset disabled={pending} className="min-w-0 border-b border-line pb-8">
             <legend className="text-xl font-extrabold tracking-[-.03em] text-ink">Produk pesanan</legend>
             <p className="mt-2 text-sm leading-6 text-muted">Gabungkan beberapa produk dalam satu pembayaran.</p>
@@ -185,9 +185,9 @@ export default function CheckoutPage() {
                   <div className="mt-4 flex flex-col gap-3 rounded-xl border border-line bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
                     <span id={`quantity-label-${index}`} className="text-sm font-extrabold text-ink">Jumlah</span>
                     <div role="group" aria-labelledby={`quantity-label-${index}`} className="flex items-center justify-between gap-3 sm:justify-end">
-                      <Button type="button" variant="outline" className="size-11 min-h-11 shrink-0 rounded-lg p-0" onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) })} aria-label={`Kurangi jumlah ${product.name}`}><Minus size={16} aria-hidden="true" /></Button>
+                      <Button type="button" variant="outline" className="size-11 min-h-11 shrink-0 rounded-lg p-0" disabled={item.quantity === 1} onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) })} aria-label={`Kurangi jumlah ${product.name}`}><Minus size={16} aria-hidden="true" /></Button>
                       <span className="min-w-8 text-center text-sm font-extrabold text-ink" aria-live="polite">{item.quantity}</span>
-                      <Button type="button" variant="outline" className="size-11 min-h-11 shrink-0 rounded-lg p-0" onClick={() => updateItem(index, { quantity: Math.min(100, item.quantity + 1) })} aria-label={`Tambah jumlah ${product.name}`}><Plus size={16} aria-hidden="true" /></Button>
+                      <Button type="button" variant="outline" className="size-11 min-h-11 shrink-0 rounded-lg p-0" disabled={item.quantity === 100} onClick={() => updateItem(index, { quantity: Math.min(100, item.quantity + 1) })} aria-label={`Tambah jumlah ${product.name}`}><Plus size={16} aria-hidden="true" /></Button>
                     </div>
                   </div>
 
@@ -239,7 +239,7 @@ export default function CheckoutPage() {
           </fieldset>
         </form>
 
-        <aside aria-labelledby="summary-heading" className="order-1 h-fit rounded-2xl bg-primary-dark p-6 text-white shadow-[0_16px_38px_rgba(8,116,95,.2)] sm:p-8 lg:order-2 lg:sticky lg:top-8">
+        <aside aria-labelledby="summary-heading" className="h-fit rounded-2xl bg-primary-dark p-6 text-white shadow-[0_16px_38px_rgba(8,116,95,.2)] sm:p-8 lg:sticky lg:top-8">
           <h2 id="summary-heading" className="text-lg font-extrabold tracking-[-.02em]">Ringkasan pesanan</h2>
           <ul className="mt-5 divide-y divide-white/20 border-y border-white/20">
             {cartDetails.map(({ index, item, product, variant }) => {
