@@ -231,7 +231,7 @@ export default function CheckoutPage() {
             <div className="mt-6 rounded-xl border border-line bg-cream/40 p-4">
               <div className="flex gap-3">
                 <input id="preorder-consent" type="checkbox" required checked={consent} aria-invalid={Boolean(fieldErrors['preorder-consent'])} aria-describedby={fieldErrors['preorder-consent'] ? 'preorder-consent-error' : undefined} onChange={(event) => { setConsent(event.target.checked); clearFieldError('preorder-consent') }} className="mt-0.5 size-5 shrink-0 accent-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark" />
-                <label htmlFor="preorder-consent" className="text-sm leading-6 text-ink">Saya mengerti ini pesanan pra-produksi: produksi baru dimulai setelah target minimum kampanye tercapai. Jika target tidak tercapai sampai batas waktu, pembayaran dikembalikan sesuai ketentuan kampanye.</label>
+                <label htmlFor="preorder-consent" className="text-sm leading-6 text-ink">Saya mengerti ini pesanan pra-produksi: produksi baru dimulai setelah target minimum kampanye tercapai. Jika target tidak tercapai sampai batas waktu, pembayaran dikembalikan sesuai ketentuan kampanye.<span aria-hidden="true" className="text-error"> *</span></label>
               </div>
               {fieldErrors['preorder-consent'] && <p id="preorder-consent-error" role="alert" className="mt-2 text-xs font-bold text-error">{fieldErrors['preorder-consent']}</p>}
             </div>

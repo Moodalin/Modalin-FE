@@ -19,13 +19,37 @@ export interface OwnedCampaignSummary {
   _count: { orders: number }
 }
 
+export interface ManagedCampaignProduct {
+  id: string
+  name: string
+  productType: string
+  description: string
+  priceIdr: number
+  imageUrl: string | null
+}
+
+export interface ManagedCampaignCostItem {
+  id: string
+  category: 'MATERIAL' | 'LABOUR' | 'PACKAGING' | 'TRANSPORT' | 'OTHER' | 'RESERVE'
+  name: string
+  plannedTotalIdr: number
+}
+
 export interface ManagedCampaign {
   id: string
   slug: string
   title: string
+  description: string
+  motifStory: string
   heroImageUrl: string | null
   status: CampaignLifecycleStatus
   publishedAt: string | null
+  campaignDeadline: string
+  productionDurationDays: number
+  minimumFundingTargetIdr: number
+  minimumOrderQuantity: number
+  products: ManagedCampaignProduct[]
+  costItems: ManagedCampaignCostItem[]
   _count: { orders: number }
 }
 

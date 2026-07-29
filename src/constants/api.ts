@@ -2,6 +2,7 @@ export const ApiPaths = {
   campaign: (identifier: string) => `/api/campaigns/${identifier}`,
   campaignManage: (identifier: string) => `/api/campaigns/${identifier}/manage`,
   campaignImage: (identifier: string) => `/api/campaigns/${identifier}/image`,
+  campaignProductImage: (identifier: string, productId: string) => `/api/campaigns/${identifier}/products/${productId}/image`,
   campaignPublish: (identifier: string) => `/api/campaigns/${identifier}/publish`,
   campaigns: '/api/campaigns',
   ownedCampaigns: '/api/campaigns/mine',

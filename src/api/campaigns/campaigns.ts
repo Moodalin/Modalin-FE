@@ -207,8 +207,25 @@ export async function getManagedCampaign(identifier: string): Promise<ManagedCam
   return response.data
 }
 
-export async function updateCampaignTitle(identifier: string, title: string) {
-  return apiClient.patch<ApiSuccess<ManagedCampaign>>(ApiPaths.campaign(identifier), { title })
+export type UpdateCampaignInput = {
+  title: string
+  description: string
+  motifStory: string
+  productionDurationDays?: number
+  minimumFundingTargetIdr?: number
+  minimumOrderQuantity?: number
+  products?: Array<{ id: string; name: string; productType: string; description: string; priceIdr: number }>
+  costItems?: Array<{ id: string; category: 'MATERIAL' | 'LABOUR' | 'PACKAGING' | 'TRANSPORT' | 'OTHER' | 'RESERVE'; name: string; plannedTotalIdr: number }>
+}
+
+export async function updateCampaign(identifier: string, input: UpdateCampaignInput) {
+  return apiClient.patch<ApiSuccess<ManagedCampaign>>(ApiPaths.campaign(identifier), input)
+}
+
+export async function updateCampaignProductImage(identifier: string, productId: string, image: File) {
+  const form = new FormData()
+  form.set('productImages', image)
+  return apiClient.postForm<ApiSuccess<ManagedCampaign>>(ApiPaths.campaignProductImage(identifier, productId), form)
 }
 
 export async function updateCampaignImage(identifier: string, image: File) {

@@ -16,17 +16,17 @@ type AuthMode = 'login' | 'register'
 const content = {
   login: {
     title: 'Selamat datang kembali',
-    description: 'Masuk untuk mengelola kampanye, pesanan, dan produksi.',
+    description: 'Masuk untuk melihat pesanan dan melanjutkan aktivitas Anda di Modalin.',
     image: loginTextile,
     imageTitle: 'Pesanan hari ini menjadi modal produksi esok hari.',
     imageDescription: 'Kelola permintaan pelanggan dan mulai produksi setelah target minimum tercapai.',
   },
   register: {
     title: 'Buat akun',
-    description: 'Daftarkan kelompok perajin dan siapkan kampanye pertama Anda.',
+    description: 'Buat akun untuk berbelanja atau mulai menjadi creator di Modalin.',
     image: registerWeavers,
-    imageTitle: 'Mulai produksi dengan permintaan yang sudah pasti.',
-    imageDescription: 'Susun biaya, kapasitas, dan pembagian kerja sebelum menerima pesanan.',
+    imageTitle: 'Temukan karya yang ingin Anda dukung.',
+    imageDescription: 'Belanja sebagai pelanggan atau daftarkan kelompok Anda sebagai creator.',
   },
 } as const
 
@@ -49,7 +49,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState('')
   const [pendingAction, setPendingAction] = useState<'google' | 'credentials' | null>(null)
   const requestedReturnTo = new URLSearchParams(location.search).get('returnTo')
-  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//') ? requestedReturnTo : '/dashboard'
+  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//') ? requestedReturnTo : '/campaign'
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -63,7 +63,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       if (mode === 'login') await signIn({ email, password })
       else await signUp({ name, email, password })
       toast({ message: mode === 'login' ? 'Berhasil masuk.' : 'Akun berhasil dibuat.', variant: 'success' })
-      navigate(returnTo)
+      navigate(mode === 'register' ? '/onboarding' : returnTo)
     } catch (caught) {
       toast({ message: getApiErrorMessage(caught, mode === 'login' ? 'Tidak dapat masuk. Periksa data Anda lalu coba lagi.' : 'Tidak dapat membuat akun. Coba lagi.'), variant: 'error' })
     } finally { setPendingAction(null) }
@@ -72,7 +72,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const google = async () => {
     if (pendingAction) return
     setPendingAction('google')
-    const callbackUrl = new URL(returnTo, window.location.origin)
+    const callbackDestination = mode === 'register' ? '/onboarding' : returnTo
+    const callbackUrl = new URL(callbackDestination, window.location.origin)
     try { await signInWithGoogle(callbackUrl.href) }
     catch (caught) {
       toast({ message: getApiErrorMessage(caught, 'Login dengan Google belum tersedia. Coba lagi.'), variant: 'error' })

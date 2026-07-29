@@ -27,11 +27,11 @@ export function CampaignCollectionLoading({ id = 'collection', title = 'Preview 
     <section id={id} aria-labelledby={titleId} aria-busy="true" className="bg-white px-5 py-20 lg:px-8 lg:py-28">
       <div className="mx-auto max-w-[1120px]">
         <h2 id={titleId} className="sr-only">{title}</h2>
-        <div aria-hidden="true" className="mt-7 flex items-center justify-center gap-3 overflow-hidden sm:gap-4">
+        <div aria-hidden="true" className="mt-7 flex items-center justify-center gap-3 overflow-hidden sm:gap-5">
           {Array.from({ length: 5 }, (_, index) => {
             const isActive = index === 2
             const isOuter = index === 0 || index === 4
-            return <div key={index} className={isActive ? 'h-[184px] w-[198px] rounded-lg border border-primary bg-white p-3 shadow-[0_5px_12px_rgba(8,116,95,.14)]' : isOuter ? 'hidden h-[80px] w-[76px] rounded-md border border-line bg-white p-2 opacity-45 sm:block' : 'h-[132px] w-[142px] rounded-md border border-line bg-white p-3 opacity-80'}>
+            return <div key={index} className={isActive ? 'h-[280px] w-[300px] rounded-lg border border-primary bg-white p-4 shadow-[0_5px_12px_rgba(8,116,95,.14)]' : isOuter ? 'hidden h-[126px] w-[136px] rounded-md border border-line bg-white p-3 opacity-45 sm:block' : 'h-[210px] w-[225px] rounded-md border border-line bg-white p-4 opacity-80'}>
               <SkeletonBlock className="h-[52%] w-full" delay={index * 0.12} reduceMotion={reduceMotion} />
               <SkeletonBlock className="mt-3 h-2 w-4/5" delay={index * 0.12 + 0.08} reduceMotion={reduceMotion} />
               <SkeletonBlock className="mt-2 h-1.5 w-full" delay={index * 0.12 + 0.16} reduceMotion={reduceMotion} />

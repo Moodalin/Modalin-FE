@@ -43,5 +43,5 @@ export function ArtisanRoute({ children }: { children: React.ReactNode }) {
   if (!session) return <Navigate to={`/login?returnTo=${encodeURIComponent(returnTo)}`} replace />
   if (profileError) return <main id="main-content" className="grid min-h-screen place-items-center bg-white px-5 text-center"><div><p role="alert" className="text-sm text-muted">Profil tidak dapat dimuat. Periksa koneksi Anda lalu coba lagi.</p><button type="button" className="mt-4 rounded-xl bg-primary-dark px-4 py-2 text-sm font-bold text-white" onClick={() => setRetry((current) => current + 1)}>Coba lagi</button></div></main>
   if ((profile?.role === 'ARTISAN' && profile.onboardingStatus === 'COMPLETED') || profile?.role === 'ADMIN') return children
-  return <Navigate to={`/onboarding?returnTo=${encodeURIComponent(returnTo)}`} replace />
+  return <Navigate to={`/onboarding?mode=creator&returnTo=${encodeURIComponent(returnTo)}`} replace />
 }

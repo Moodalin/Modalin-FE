@@ -16,6 +16,7 @@ const CampaignPublicPage = lazy(() => import('@/pages/campaign-public'))
 const CampaignCollectionPage = lazy(() => import('@/pages/campaign-collection'))
 const CampaignBuilderPage = lazy(() => import('@/pages/campaign-builder'))
 const CampaignManagePage = lazy(() => import('@/pages/campaign-manage'))
+const MyCampaignsPage = lazy(() => import('@/pages/my-campaigns'))
 const CheckoutPage = lazy(() => import('@/pages/checkout'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const ProfilePage = lazy(() => import('@/pages/profile'))
@@ -44,10 +45,12 @@ export default function App() {
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+            <Route path="/campaign" element={<CampaignCollectionPage />} />
             <Route path="/campaigns" element={<CampaignCollectionPage />} />
             <Route path="/campaigns/:campaignId" element={<CampaignPublicPage />} />
             <Route path="/campaigns/new" element={<ArtisanRoute><CampaignBuilderPage /></ArtisanRoute>} />
             <Route path="/campaigns/:campaignId/manage" element={<ArtisanRoute><CampaignManagePage /></ArtisanRoute>} />
+            <Route path="/my-campaigns" element={<ArtisanRoute><MyCampaignsPage /></ArtisanRoute>} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ArtisanRoute><DashboardPage /></ArtisanRoute>} />
             <Route path="*" element={<NotFoundPage />} />

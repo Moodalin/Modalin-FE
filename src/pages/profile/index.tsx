@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, Eye, EyeOff, ImagePlus, KeyRound, LoaderCircle, Mail, ReceiptText, Save, UserRound, UsersRound } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, FolderKanban, ImagePlus, KeyRound, LoaderCircle, Mail, ReceiptText, Save, Store, UserRound, UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getProfile, updateProfile, uploadGroupBanner, uploadProfileImage, type ArtisanProfile, type UpdateProfileInput } from '@/api/profile/profile'
 import { Avatar, MarketingHeader } from '@/components/layout/marketing'
@@ -333,7 +333,7 @@ export default function ProfilePage() {
               </div>
               <p className="mt-4 break-words text-xl font-extrabold leading-6 text-ink">{form.name.trim() || 'Nama akun'}</p>
               <p className="mt-1 break-all text-xs text-muted">{profile.user.email}</p>
-              <ButtonLink to="/orders" variant="outline" className="mt-5 w-full"><ReceiptText size={17} aria-hidden="true" />Riwayat pesanan</ButtonLink>
+              <div className="mt-5 grid gap-2"><ButtonLink to="/orders" variant="outline" className="w-full"><ReceiptText size={17} aria-hidden="true" />Riwayat pesanan</ButtonLink>{group ? <ButtonLink to="/my-campaigns" variant="outline" className="w-full"><FolderKanban size={17} aria-hidden="true" />Kampanye Saya</ButtonLink> : <ButtonLink to="/onboarding?mode=creator&returnTo=%2Fcampaigns%2Fnew" variant="outline" className="w-full"><Store size={17} aria-hidden="true" />Jadi Creator</ButtonLink>}</div>
               <p id="profile-image-hint" className="mt-4 text-xs leading-5 text-muted">JPEG, PNG, atau WebP. Foto dipotong menjadi 512 × 512 piksel.</p>
               {profileImage && !imageError && <p role="status" className="mt-2 text-xs font-bold text-primary-dark">Foto baru siap disimpan.</p>}
               {imageError && <p id="profile-image-error" role="alert" className="mt-2 text-xs font-bold text-error">{imageError}</p>}

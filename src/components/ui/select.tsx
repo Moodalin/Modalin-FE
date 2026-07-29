@@ -174,7 +174,7 @@ export function Select({ id, label, value, onChange, options, placeholder = 'Pil
     </div>)}
   </div>
 
-  return <FieldShell id={id} label={label} error={error} hint={hint} labelClassName={labelClassName}>
+  return <FieldShell id={id} label={label} error={error} hint={hint} required={required} labelClassName={labelClassName}>
     <div ref={rootRef} className="relative">
       <button
         id={id}

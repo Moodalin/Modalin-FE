@@ -70,6 +70,7 @@ type RichTextEditorProps = {
   hint?: string
   required?: boolean
   maxLength?: number
+  disabled?: boolean
   className?: string
 }
 
@@ -172,7 +173,7 @@ function normalizeLinkHref(raw: string) {
   return safeHref(candidate)
 }
 
-export function RichTextEditor({ id, label, value, onChange, error, hint, required, maxLength, className }: RichTextEditorProps) {
+export function RichTextEditor({ id, label, value, onChange, error, hint, required, maxLength, disabled = false, className }: RichTextEditorProps) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [focusedControl, setFocusedControl] = useState(0)
   const [linkDraft, setLinkDraft] = useState<string | null>(null)
@@ -201,9 +202,10 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
   const editor = useEditor({
     extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false, defaultProtocol: 'https', protocols: ['http', 'https'] } }), RichTextTypography],
     content: parseRichText(value),
-    shouldRerenderOnTransaction: true,
-    editorProps: {
-      attributes: {
+      shouldRerenderOnTransaction: true,
+      editable: !disabled,
+      editorProps: {
+        attributes: {
         id,
         class: editorClassName,
         'aria-label': label,
@@ -211,6 +213,8 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
     },
     onUpdate: ({ editor: activeEditor }) => onChangeRef.current(JSON.stringify(activeEditor.getJSON())),
   })
+
+  useEffect(() => { editor?.setEditable(!disabled) }, [disabled, editor])
 
   useEffect(() => {
     if (!editor) return
@@ -352,7 +356,7 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
       {toolbarControls.map((control, index) => {
         const Icon = control.icon
         const active = editor ? Boolean(control.active?.(editor)) : false
-        const disabled = !editor || (control.enabled ? !control.enabled(editor) : false)
+        const controlDisabled = disabled || !editor || (control.enabled ? !control.enabled(editor) : false)
         return <Fragment key={control.label}>
           {index > 0 && control.groupIndex !== toolbarControls[index - 1].groupIndex && <span aria-hidden="true" className="mx-0.5 h-6 w-px self-center bg-line" />}
           <button
@@ -362,19 +366,20 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
             aria-label={control.label}
             title={control.label}
             aria-pressed={control.active ? active : undefined}
-            aria-disabled={disabled || undefined}
+            disabled={controlDisabled}
+            aria-disabled={controlDisabled || undefined}
             aria-haspopup={control.popover ? 'dialog' : undefined}
             aria-expanded={control.popover ? isLinkEditorOpen : undefined}
             aria-controls={control.popover && isLinkEditorOpen ? linkPopoverId : undefined}
             onFocus={() => setFocusedControl(index)}
-            onClick={() => { if (editor && !disabled) control.run({ editor, openLinkEditor }) }}
+            onClick={() => { if (editor && !controlDisabled) control.run({ editor, openLinkEditor }) }}
             className={cn(controlClass, active && activeControlClass)}
           ><Icon size={17} aria-hidden="true" /></button>
         </Fragment>
       })}
       <span aria-hidden="true" className="mx-0.5 h-6 w-px self-center bg-line" />
-      <FontSizeControl value={currentFontSize} disabled={!editor} onChange={(nextValue) => updateBlockTypography('fontSize', nextValue)} />
-      <div className="w-[4.5rem] min-w-0"><Select id={`${id}-line-height`} label="Jarak baris" labelClassName="sr-only" value={currentLineHeight} options={lineHeightOptions} disabled={!editor} onChange={(nextValue) => updateBlockTypography('lineHeight', nextValue)} toolbar /></div>
+      <FontSizeControl value={currentFontSize} disabled={disabled || !editor} onChange={(nextValue) => updateBlockTypography('fontSize', nextValue)} />
+      <div className="w-[4.5rem] min-w-0"><Select id={`${id}-line-height`} label="Jarak baris" labelClassName="sr-only" value={currentLineHeight} options={lineHeightOptions} disabled={disabled || !editor} onChange={(nextValue) => updateBlockTypography('lineHeight', nextValue)} toolbar /></div>
       <span aria-hidden="true" className="mx-0.5 h-6 w-px self-center bg-line" />
       <button
         ref={(element) => { controlRefs.current[toolbarControls.length] = element; maximizeButtonRef.current = element }}
@@ -382,10 +387,11 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
         tabIndex={focusedControl === toolbarControls.length ? 0 : -1}
         title={isMaximized ? 'Perkecil editor (Esc)' : 'Perbesar editor'}
         aria-label={isMaximized ? 'Perkecil editor' : 'Perbesar editor'}
+        disabled={disabled}
         aria-expanded={isMaximized}
         aria-controls={id}
         onFocus={() => setFocusedControl(toolbarControls.length)}
-        onClick={() => setIsMaximized(!isMaximized)}
+        onClick={() => { if (!disabled) setIsMaximized(!isMaximized) }}
         className={cn(controlClass, 'ml-auto')}
       >{isMaximized ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}</button>
     </div>
@@ -429,7 +435,7 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
     </div>
   }
 
-  return <div className={cn('grid gap-2', className)}>
+  return <div aria-disabled={disabled || undefined} className={cn('grid gap-2', disabled && 'opacity-70', className)}>
     <div className="flex items-end justify-between gap-3">
       <label id={labelId} htmlFor={id} className="text-sm font-extrabold tracking-[-.01em] text-ink">{label}{required && <span aria-hidden="true" className="text-error"> *</span>}</label>
       {maxLength && <span className={characterCount > maxLength ? 'text-xs font-bold text-error' : 'text-xs text-muted'}>{characterCount}/{maxLength}</span>}

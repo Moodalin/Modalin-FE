@@ -37,11 +37,11 @@ function CollectionPreview() {
   const activeIndex = Math.min(Math.max(0, selectedIndex), previewCampaigns.length - 1)
   const selected = previewCampaigns[activeIndex]!
   const slots = [
-    { key: 'outer-left', offset: -2, className: 'hidden h-[80px] w-[86px] sm:block', scale: .43, opacity: .45 },
-    { key: 'left', offset: -1, className: 'h-[132px] w-[142px]', scale: .72, opacity: .8 },
-    { key: 'active', offset: 0, className: 'h-[184px] w-[198px]', scale: 1, opacity: 1 },
-    { key: 'right', offset: 1, className: 'h-[132px] w-[142px]', scale: .72, opacity: .8 },
-    { key: 'outer-right', offset: 2, className: 'hidden h-[80px] w-[86px] sm:block', scale: .43, opacity: .45 },
+    { key: 'outer-left', offset: -2, className: 'hidden h-[126px] w-[136px] sm:block', scale: .45, opacity: .45 },
+    { key: 'left', offset: -1, className: 'h-[210px] w-[225px]', scale: .75, opacity: .8 },
+    { key: 'active', offset: 0, className: 'h-[280px] w-[300px]', scale: 1, opacity: 1 },
+    { key: 'right', offset: 1, className: 'h-[210px] w-[225px]', scale: .75, opacity: .8 },
+    { key: 'outer-right', offset: 2, className: 'hidden h-[126px] w-[136px] sm:block', scale: .45, opacity: .45 },
   ]
   const visibleCount = Math.min(5, previewCampaigns.length)
   const startOffset = -Math.min(2, Math.floor(visibleCount / 2))
@@ -51,12 +51,12 @@ function CollectionPreview() {
   const cardContent = (campaign: typeof selected) => {
     const progress = campaign.targetAmount ? Math.min(100, Math.round(campaign.currentAmount / campaign.targetAmount * 100)) : 0
     return <>
-      <img src={campaign.imageUrl} alt="" className="h-[47%] w-full rounded-sm object-cover" loading="lazy" decoding="async" />
-      <span className="mt-2 block">
-        <span className="flex items-start justify-between gap-1"><span className="text-[8px] font-semibold leading-tight text-primary-dark">{campaign.title}</span><span className="shrink-0 text-[5px] font-medium text-primary-dark">{campaign.daysLeft} Hari Tersisa</span></span>
-        <span className="mt-1 block text-[5px] text-muted">{campaign.location}</span>
-        <span className="mt-3 flex items-baseline justify-between gap-1"><span className="text-[10px] font-semibold text-primary-dark">{progress}%</span><span className="text-[5px] text-muted">Dana Terkumpul</span></span>
-        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-primary-dark" style={{ width: `${progress}%` }} /></span>
+      <img src={campaign.imageUrl} alt="" className="h-[52%] w-full rounded-md object-cover" loading="lazy" decoding="async" />
+      <span className="mt-3 block">
+        <span className="flex items-start justify-between gap-2"><span className="text-[12px] font-semibold leading-tight text-primary-dark">{campaign.title}</span><span className="shrink-0 text-[8px] font-medium text-primary-dark">{campaign.daysLeft} Hari Tersisa</span></span>
+        <span className="mt-1.5 block text-[8px] text-muted">{campaign.location}</span>
+        <span className="mt-5 flex items-baseline justify-between gap-1"><span className="text-sm font-semibold text-primary-dark">{progress}%</span><span className="text-[8px] text-muted">Dana Terkumpul</span></span>
+        <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-primary-dark" style={{ width: `${progress}%` }} /></span>
       </span>
     </>
   }
@@ -64,14 +64,14 @@ function CollectionPreview() {
   return (
     <section id="collection" aria-labelledby="collection-heading" className="overflow-hidden bg-white py-20 lg:py-28">
       <h2 id="collection-heading" className="sr-only">Preview koleksi kain tenun</h2>
-      <div className="mx-auto flex max-w-[774px] items-center justify-center gap-3 px-2 sm:gap-4 sm:px-5" aria-label="Preview koleksi kain tenun">
+      <div className="mx-auto flex max-w-[1120px] items-center justify-center gap-3 px-2 sm:gap-5 sm:px-5" aria-label="Preview koleksi kain tenun">
         {visibleSlots.map((slot) => {
           const campaignIndex = ((activeIndex + slot.offset) % previewCampaigns.length + previewCampaigns.length) % previewCampaigns.length
           const campaign = previewCampaigns[campaignIndex]!
           const isActive = slot.offset === 0
-          const cardClassName = `block h-full w-full overflow-hidden rounded-md border bg-white p-3 text-left ${isActive ? 'border-primary shadow-[0_5px_12px_rgba(8,116,95,.14)]' : 'border-line'}`
+          const cardClassName = `block h-full w-full overflow-hidden rounded-lg border bg-white p-4 text-left ${isActive ? 'border-primary shadow-[0_5px_12px_rgba(8,116,95,.14)]' : 'border-line'}`
           return <motion.div key={campaign.id} layout className={`relative shrink-0 ${slot.className}`} animate={{ opacity: slot.opacity }} transition={{ layout: collectionTransition, opacity: collectionTransition }}>
-            <motion.div className="absolute left-0 top-0 h-[184px] w-[198px] origin-top-left" animate={{ scale: slot.scale }} transition={collectionTransition}>
+            <motion.div className="absolute left-0 top-0 h-[280px] w-[300px] origin-top-left" animate={{ scale: slot.scale }} transition={collectionTransition}>
               {isActive
                 ? <Link to={`/campaigns/${campaign.id}`} aria-label={`Buka ${campaign.title}`} className={`${cardClassName} focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark`}>{cardContent(campaign)}</Link>
                 : <button type="button" aria-label={`Tampilkan ${campaign.title} di tengah`} className={`${cardClassName} cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark`} onClick={() => setSelectedIndex(campaignIndex)}>{cardContent(campaign)}</button>}
@@ -79,7 +79,7 @@ function CollectionPreview() {
           </motion.div>
         })}
       </div>
-      <div className="mt-6 flex justify-center px-5 lg:px-8"><ButtonLink to="/campaigns" className="rounded-xl px-7 py-3 text-xs">Lihat Koleksi Selengkapnya</ButtonLink></div>
+      <div className="mt-6 flex justify-center px-5 lg:px-8"><ButtonLink to="/campaign" className="rounded-xl px-7 py-3 text-xs">Lihat Koleksi Selengkapnya</ButtonLink></div>
     </section>
   )
 }
@@ -175,7 +175,7 @@ export default function LandingPage() {
 
   return <div className="overflow-hidden bg-white text-ink"><MarketingHeader /><main id="main-content">
     <section className="bg-white px-5 pb-16 pt-10 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-14"><div className="mx-auto grid max-w-[1120px] items-center gap-12 lg:grid-cols-[.95fr_1.05fr] lg:gap-16">
-      <motion.div initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : .48, ease: [0.16, 1, 0.3, 1] }}><h1 tabIndex={-1} className="max-w-[500px] text-5xl font-medium leading-[.9] tracking-[-.08em] text-black sm:text-6xl lg:text-7xl">Mengubah<br />Ketertarikan<br />Menjadi<br />Modal</h1><div className="mt-9 flex flex-wrap items-center gap-5"><p className="max-w-[184px] text-xs leading-5 text-muted">Tertarik dengan produk tekstil? Langsung saja cek koleksi kami.</p><a href="#collection" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[linear-gradient(120deg,#00b89c_0%,#168cf2_48%,#5d34ff_100%)] px-5 py-2.5 text-xs font-semibold !text-white shadow-[0_8px_20px_rgba(93,52,255,.2)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark">Cek Koleksi <ArrowRight size={15} aria-hidden="true" /></a></div></motion.div>
+      <motion.div initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : .48, ease: [0.16, 1, 0.3, 1] }}><h1 tabIndex={-1} className="max-w-[500px] text-5xl font-medium leading-[.9] tracking-[-.08em] text-black sm:text-6xl lg:text-7xl">Mengubah<br />Ketertarikan<br />Menjadi<br />Modal</h1><div className="mt-9 flex flex-wrap items-center gap-5"><p className="max-w-[184px] text-xs leading-5 text-muted">Tertarik dengan produk tekstil? Langsung saja cek koleksi kami.</p><a href="/campaign" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[linear-gradient(120deg,#00b89c_0%,#168cf2_48%,#5d34ff_100%)] px-5 py-2.5 text-xs font-semibold !text-white shadow-[0_8px_20px_rgba(93,52,255,.2)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary-dark">Cek Koleksi <ArrowRight size={15} aria-hidden="true" /></a></div></motion.div>
       <motion.div className="relative mx-auto aspect-[1.25] w-full max-w-[520px]" initial={shouldReduceMotion ? false : { opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: shouldReduceMotion ? 0 : .08, duration: shouldReduceMotion ? 0 : .56, ease: [0.16, 1, 0.3, 1] }}><img src="/hero/1.png" alt="Pengrajin sedang menjahit kain" className="absolute left-[7%] top-0 w-[56%]" /><img src="/hero/2.png" alt="Pengrajin sedang membatik" className="absolute right-[3%] top-0 w-[34%]" /><img src="/hero/3.png" alt="Pengrajin lansia sedang membatik" className="absolute right-[3%] top-[43%] w-[57%]" /><span className="hero-orb absolute left-[3%] top-[38%] h-[22%] w-[17%] bg-[radial-gradient(circle_at_30%_25%,#866fff,#5d34ff_55%,#3d18ce)] shadow-[0_12px_28px_rgba(93,52,255,.28)]" aria-hidden="true" /><span className="hero-orb absolute bottom-[9%] left-[24%] h-[23%] w-[16%] bg-[linear-gradient(135deg,#ffd465,#ffb62e)] shadow-[0_10px_24px_rgba(255,182,46,.25)]" aria-hidden="true" /><span className="hero-orb absolute bottom-[1%] right-[26%] h-[24%] w-[19%] bg-[linear-gradient(135deg,#00c7a3,#00a98c)] shadow-[0_10px_24px_rgba(0,178,143,.22)]" aria-hidden="true" /></motion.div>
     </div></section>
     <section id="problem" className="bg-white px-5 pt-14 lg:px-8 lg:pt-20"><div className="mx-auto max-w-[820px] text-center"><h2 className="text-4xl font-medium tracking-[-.07em] text-black sm:text-5xl">Masalah Utama</h2><ProblemStatement /></div><PhoneScene /></section>
