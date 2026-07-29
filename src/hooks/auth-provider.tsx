@@ -44,6 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throwAuthError(result.error)
       setSession(null)
     },
+    changePassword: async (input) => {
+      const result = await authClient.changePassword({ ...input, revokeOtherSessions: true })
+      throwAuthError(result.error)
+      await refreshSession()
+    },
+    requestPasswordReset: async (email, redirectTo) => {
+      const result = await authClient.requestPasswordReset({ email, redirectTo })
+      throwAuthError(result.error)
+    },
+    hasCredentialAccount: async () => {
+      const result = await authClient.listAccounts()
+      throwAuthError(result.error)
+      return Boolean(result.data?.some((account) => account.providerId === 'credential'))
+    },
   }
 
   return <AuthContext value={value}>{children}</AuthContext>

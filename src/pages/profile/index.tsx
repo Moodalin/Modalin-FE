@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, ImagePlus, LoaderCircle, ReceiptText, Save, UserRound, UsersRound } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, ImagePlus, KeyRound, LoaderCircle, Mail, ReceiptText, Save, UserRound, UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getProfile, updateProfile, uploadGroupBanner, uploadProfileImage, type ArtisanProfile, type UpdateProfileInput } from '@/api/profile/profile'
 import { Avatar, MarketingHeader } from '@/components/layout/marketing'
@@ -66,7 +66,7 @@ function validate(form: ProfileForm, hasGroup: boolean): ProfileErrors {
   return errors
 }
 export default function ProfilePage() {
-  const { refreshSession } = useAuth()
+  const { refreshSession, changePassword, requestPasswordReset, hasCredentialAccount } = useAuth()
   const { toast } = useToast()
   const [profile, setProfile] = useState<ArtisanProfile | null>(null)
   const [form, setForm] = useState<ProfileForm>(emptyForm)
@@ -76,6 +76,13 @@ export default function ProfilePage() {
   const [retry, setRetry] = useState(0)
   const [pending, setPending] = useState(false)
   const [bannerPending, setBannerPending] = useState(false)
+  const [credentialAccount, setCredentialAccount] = useState<boolean | null>(null)
+  const [securityError, setSecurityError] = useState('')
+  const [securityPending, setSecurityPending] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState('')
   const [imageError, setImageError] = useState<string>()
@@ -98,16 +105,19 @@ export default function ProfilePage() {
     let current = true
     setLoading(true)
     setLoadError(false)
-    getProfile()
-      .then((result) => {
+    setCredentialAccount(null)
+    Promise.all([getProfile(), hasCredentialAccount().catch(() => null)])
+      .then(([result, hasCredential]) => {
         if (!current) return
         setProfile(result)
         setForm(profileForm(result))
+        setCredentialAccount(hasCredential)
+        setSecurityError(hasCredential === null ? 'Status keamanan belum dapat dimuat.' : '')
       })
       .catch(() => { if (current) setLoadError(true) })
       .finally(() => { if (current) setLoading(false) })
     return () => { current = false }
-  }, [retry])
+  }, [hasCredentialAccount, retry])
 
   const update = (field: ProfileField, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -147,6 +157,51 @@ export default function ProfilePage() {
       toast({ message: getApiErrorMessage(error, 'Banner kelompok tidak dapat diperbarui. Coba lagi.'), variant: 'error' })
     } finally {
       setBannerPending(false)
+    }
+  }
+
+  const reloadCredentialStatus = async () => {
+    setSecurityError('')
+    try {
+      setCredentialAccount(await hasCredentialAccount())
+    } catch (error) {
+      setSecurityError(getApiErrorMessage(error, 'Status keamanan belum dapat dimuat.'))
+    }
+  }
+
+  const submitPassword = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    setSecurityError('')
+    if (securityPending) return
+    if (!credentialAccount) {
+      const email = profile?.user.email
+      if (!email) return setSecurityError('Email akun belum tersedia untuk menerima tautan.')
+      setSecurityPending(true)
+      try {
+        await requestPasswordReset(email, `${window.location.origin}/reset-password`)
+        toast({ message: 'Tautan untuk membuat kata sandi dikirim ke email akun Anda.', variant: 'success' })
+      } catch (error) {
+        setSecurityError(getApiErrorMessage(error, 'Tautan kata sandi tidak dapat dikirim. Coba lagi.'))
+      } finally {
+        setSecurityPending(false)
+      }
+      return
+    }
+    if (currentPassword.length === 0) return setSecurityError('Masukkan kata sandi saat ini.')
+    if (newPassword.length < 8 || newPassword.length > 128) return setSecurityError('Gunakan 8–128 karakter untuk kata sandi baru.')
+    if (newPassword !== confirmPassword) return setSecurityError('Konfirmasi kata sandi belum sama.')
+    if (currentPassword === newPassword) return setSecurityError('Kata sandi baru harus berbeda dari kata sandi saat ini.')
+    setSecurityPending(true)
+    try {
+      await changePassword({ currentPassword, newPassword })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      toast({ message: 'Kata sandi diperbarui. Sesi lain telah dikeluarkan.', variant: 'success' })
+    } catch (error) {
+      setSecurityError(getApiErrorMessage(error, 'Kata sandi tidak dapat diperbarui. Periksa kata sandi saat ini.'))
+    } finally {
+      setSecurityPending(false)
     }
   }
 
@@ -311,6 +366,11 @@ export default function ProfilePage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Link to={backTo} className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-extrabold text-primary-dark hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark">Batal</Link><Button type="submit" disabled={pending || bannerPending} loading={pending}><Save size={17} aria-hidden="true" />{pending ? 'Menyimpan…' : 'Simpan profil'}</Button></div>
           </div>
         </form>
+
+        <section aria-labelledby="security-heading" className="mt-8 rounded-2xl border border-line bg-white p-5 sm:p-7 lg:ml-[292px]">
+          <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary-dark"><KeyRound size={19} aria-hidden="true" /></span><div><h2 id="security-heading" className="text-lg font-extrabold text-ink">Keamanan akun</h2><p className="text-xs leading-5 text-muted">Kelola kata sandi untuk login email tanpa memengaruhi login Google.</p></div></div>
+          {credentialAccount === null ? <div className="mt-6 rounded-xl border border-line p-4"><p role="alert" className="text-sm text-muted">{securityError || 'Memuat status keamanan…'}</p><Button type="button" variant="outline" className="mt-3" onClick={reloadCredentialStatus}>Coba lagi</Button></div> : credentialAccount ? <form className="mt-6 grid gap-5" onSubmit={submitPassword} noValidate>{securityError && <p role="alert" className="rounded-xl border border-error/25 bg-error/5 px-3 py-2.5 text-sm text-error">{securityError}</p>}<div className="relative"><Input id="current-password" label="Kata sandi saat ini" type={showPasswords ? 'text' : 'password'} autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} /><button type="button" onClick={() => setShowPasswords((current) => !current)} aria-label={showPasswords ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} className="absolute right-1.5 top-7 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-cream hover:text-ink">{showPasswords ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button></div><div><p className="mb-3 text-xs leading-5 text-muted">Gunakan 8–128 karakter untuk kata sandi baru.</p><div className="grid items-start gap-5 sm:grid-cols-2"><Input id="profile-new-password" label="Kata sandi baru" type={showPasswords ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={128} required value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /><Input id="profile-confirm-password" label="Konfirmasi kata sandi" type={showPasswords ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={128} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} /></div></div><Button type="submit" className="justify-self-start" loading={securityPending} disabled={securityPending}>Ubah kata sandi</Button></form> : <div className="mt-6 rounded-xl border border-line p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cream text-primary-dark"><Mail size={18} aria-hidden="true" /></span><div><h3 className="font-extrabold text-ink">Buat kata sandi untuk login email</h3><p className="mt-1 text-sm leading-6 text-muted">Akun Anda masuk melalui Google dan belum memiliki kata sandi. Kami akan mengirim tautan aman ke <strong className="text-ink">{profile.user.email}</strong>. Tidak ada kata sandi awal atau kata sandi otomatis.</p></div></div>{securityError && <p role="alert" className="mt-4 text-sm text-error">{securityError}</p>}<Button type="button" className="mt-5" loading={securityPending} disabled={securityPending} onClick={() => void submitPassword()}>Kirim tautan ke email</Button></div>}
+        </section>
       </div>
     </main>
     {cropSourceImage && <AvatarCropDialog file={cropSourceImage} onCancel={() => setCropSourceImage(null)} onConfirm={(file) => { setProfileImage(file); setImageError(undefined); setCropSourceImage(null) }} />}

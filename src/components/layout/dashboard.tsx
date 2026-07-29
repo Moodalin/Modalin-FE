@@ -7,11 +7,12 @@ import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, BrandMark } from '@/components/layout/marketing'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { Progress } from '@/components/ui/progress'
+import { Select } from '@/components/ui/select'
+import type { OwnedCampaignSummary } from '@/types/campaign'
 import { cn } from '@/components/ui/utils'
 
 
-export function DashboardLayout({ active, campaignTitle, campaignProgress, children }: { active: string; campaignTitle?: string; campaignProgress?: number; children: ReactNode }) {
+export function DashboardLayout({ active, campaigns = [], selectedCampaignId = '', onCampaignChange, children }: { active: string; campaigns?: OwnedCampaignSummary[]; selectedCampaignId?: string; onCampaignChange?: (campaignId: string) => void; children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -25,7 +26,9 @@ export function DashboardLayout({ active, campaignTitle, campaignProgress, child
   const navigate = useNavigate()
   const user = session?.user
   const accountName = user?.name || 'Akun'
-  const hasActiveCampaign = campaignTitle !== undefined && campaignProgress !== undefined
+  const campaignStatusLabels: Record<string, string> = { DRAFT: 'Draf', REVIEW: 'Perlu ditinjau', PUBLISHED: 'Terbit', FUNDING: 'Pre-order dibuka', EXTENDED: 'Diperpanjang', TARGET_REACHED: 'Target tercapai', IN_PRODUCTION: 'Dalam produksi', QUALITY_CHECK: 'Pemeriksaan kualitas', PACKING: 'Pengemasan', SHIPPING: 'Pengiriman', COMPLETED: 'Selesai', FAILED: 'Target tidak tercapai', CANCELLED: 'Dibatalkan' }
+  const campaignOptions = campaigns.map((campaign) => ({ value: campaign.id, label: campaign.title, description: `${campaignStatusLabels[campaign.status] ?? campaign.status} · ${campaign._count.orders} pesanan` }))
+  const selectedCampaignQuery = selectedCampaignId ? `&campaignId=${encodeURIComponent(selectedCampaignId)}` : ''
 
   useEffect(() => {
     if (!accountOpen) return
@@ -81,13 +84,13 @@ export function DashboardLayout({ active, campaignTitle, campaignProgress, child
         >
           {sidebarCollapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}
         </button>
-        {hasActiveCampaign && <div className={cn('mt-7 rounded-2xl border border-line bg-white p-5', sidebarCollapsed && 'lg:hidden')}><p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-muted">Kampanye aktif</p><p className="mt-2 line-clamp-2 text-lg font-extrabold leading-6 text-ink">{campaignTitle}</p><Progress className="mt-5" value={campaignProgress ?? 0} label="Target produksi" /></div>}
+
         <nav className="mt-6 grid gap-1" aria-label="Navigasi dasbor">
           {DashboardNavigation.map((item) => {
             const Icon = item.icon
             return <Link
               key={item.id}
-              to={`/dashboard?tab=${item.id}`}
+              to={`/dashboard?tab=${item.id}${selectedCampaignQuery}`}
               aria-current={active === item.id ? 'page' : undefined}
               aria-label={sidebarCollapsed ? item.label : undefined}
               title={sidebarCollapsed ? item.label : undefined}
@@ -103,8 +106,9 @@ export function DashboardLayout({ active, campaignTitle, campaignProgress, child
       </aside>
       {open && <button type="button" aria-label="Tutup navigasi" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-ink/25 lg:hidden" />}
       <div className={cn('transition-[padding] duration-200 motion-reduce:transition-none', sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64')}>
-        <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-line bg-white px-5 lg:px-9">
-          <button type="button" className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-white text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark lg:hidden" aria-label="Buka navigasi" onClick={() => setOpen(true)}><Menu size={20} aria-hidden="true" /></button>
+        <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 border-b border-line bg-white px-5 lg:px-9">
+          <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-line bg-white text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark lg:hidden" aria-label="Buka navigasi" onClick={() => setOpen(true)}><Menu size={20} aria-hidden="true" /></button>
+          {campaigns.length > 0 && <div className="min-w-0 flex-1 sm:max-w-sm lg:ml-0"><Select id="header-campaign" label="Kampanye" labelClassName="sr-only" value={selectedCampaignId} options={campaignOptions} onChange={(campaignId) => onCampaignChange?.(campaignId)} compact /></div>}
           <div
             ref={accountRef}
             className="relative ml-auto"

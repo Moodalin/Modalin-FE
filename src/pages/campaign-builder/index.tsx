@@ -31,7 +31,7 @@ const costCategories: SelectOption[] = [
 ]
 
 const newId = () => crypto.randomUUID()
-const newProduct = (): BuilderProductDraft => ({ id: newId(), name: '', productType: '', description: '', priceIdr: '' })
+const newProduct = (): BuilderProductDraft => ({ id: newId(), name: '', productType: '', description: '', priceIdr: '', image: null })
 const newCost = (): BuilderCostDraft => ({ id: newId(), category: '', name: '', plannedTotalIdr: '' })
 const numericValue = (value: string): BuilderNumber => value === '' ? '' : Number(value)
 const numericAmount = (value: BuilderNumber) => value === '' ? 0 : value
@@ -93,6 +93,28 @@ function StepHeading({ eyebrow, title, description, headingRef }: { eyebrow: str
   </div>
 }
 
+function ProductImageField({ product, index, onSelect }: { product: BuilderProductDraft; index: number; onSelect: (file: File | null) => void }) {
+  const [imageUrl, setImageUrl] = useState('')
+
+  useEffect(() => {
+    if (!product.image) return setImageUrl('')
+    const url = URL.createObjectURL(product.image)
+    setImageUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [product.image])
+
+  const inputId = `product-image-${product.id}`
+  return <div className="grid content-start gap-2">
+    <label htmlFor={inputId} className="text-sm font-extrabold tracking-[-.01em] text-ink">Foto produk <span aria-hidden="true" className="text-error">*</span></label>
+    <div className="relative aspect-square w-full max-w-[180px] overflow-hidden rounded-2xl border border-line bg-cream">
+      <input id={inputId} type="file" accept="image/jpeg,image/png,image/webp" aria-describedby={`${inputId}-hint`} className="peer sr-only" onChange={(event) => { onSelect(event.target.files?.[0] ?? null); event.currentTarget.value = '' }} />
+      {imageUrl && <img src={imageUrl} alt={`Pratinjau foto produk ${index + 1}`} className="absolute inset-0 h-full w-full object-cover" />}
+      <label htmlFor={inputId} className={`absolute inset-0 flex cursor-pointer items-center justify-center p-4 text-center text-sm font-extrabold transition peer-focus-visible:outline-2 peer-focus-visible:outline-offset-[-4px] peer-focus-visible:outline-primary-dark ${imageUrl ? 'items-end bg-gradient-to-t from-ink/75 via-transparent to-transparent text-white opacity-0 hover:opacity-100' : 'border-2 border-dashed border-primary-dark/35 text-primary-dark hover:bg-primary/10'}`}><span className="inline-flex items-center gap-2"><ImagePlus size={18} aria-hidden="true" />{imageUrl ? 'Ganti foto' : 'Pilih foto'}</span></label>
+      {imageUrl && <button type="button" onClick={() => onSelect(null)} className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-white text-error shadow-sm hover:bg-error/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error" aria-label={`Hapus foto produk ${index + 1}`}><Trash2 size={15} aria-hidden="true" /></button>}
+    </div>
+    <div id={`${inputId}-hint`} className="max-w-[180px] text-xs leading-5 text-muted"><p>Format: JPG, PNG, atau WebP. Maksimal 10 MB.</p>{product.image && <p className="mt-1 truncate font-bold text-primary-dark" title={product.image.name}>{product.image.name} · {formatFileSize(product.image.size)}</p>}</div>
+  </div>
+}
 
 export default function CampaignBuilderPage() {
   const navigate = useNavigate()
@@ -131,16 +153,25 @@ export default function CampaignBuilderPage() {
   const addCost = () => setDraft((current) => current.costs.length >= 100 ? current : ({ ...current, confirmed: false, costs: [...current.costs, newCost()] }))
   const removeCost = (id: string) => setDraft((current) => current.costs.length === 1 ? current : ({ ...current, confirmed: false, costs: current.costs.filter((cost) => cost.id !== id) }))
 
-  const selectDesignImage = (file: File | null) => {
-    if (file && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  const validImage = (file: File | null) => {
+    if (!file) return true
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       toast({ message: 'Gunakan gambar JPG, PNG, atau WebP.', variant: 'error' })
-      return
+      return false
     }
-    if (file && file.size > 10 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast({ message: 'Pilih gambar di bawah 10 MB.', variant: 'error' })
-      return
+      return false
     }
-    update('designImage', file)
+    return true
+  }
+
+  const selectDesignImage = (file: File | null) => {
+    if (validImage(file)) update('designImage', file)
+  }
+
+  const selectProductImage = (productId: string, file: File | null) => {
+    if (!file || validImage(file)) updateProduct(productId, 'image', file)
   }
 
   const validate = (throughStep: number) => {
@@ -152,8 +183,8 @@ export default function CampaignBuilderPage() {
       const name = product.name.trim()
       const type = product.productType.trim()
       const descriptionLength = richTextLength(product.description)
-      return name.length < 2 || name.length > 160 || !type || type.length > 80 || descriptionLength < 1 || descriptionLength > 2_000 || !isWholeNumber(product.priceIdr) || numericAmount(product.priceIdr) < 1
-    }))) return 'Lengkapi setiap produk: nama 2–160 karakter, jenis, deskripsi, dan harga bulat positif.'
+      return name.length < 2 || name.length > 160 || !type || type.length > 80 || descriptionLength < 1 || descriptionLength > 2_000 || !isWholeNumber(product.priceIdr) || numericAmount(product.priceIdr) < 1 || !product.image
+    }))) return 'Lengkapi setiap produk: foto, nama 2–160 karakter, jenis, deskripsi, dan harga bulat positif.'
     if (throughStep >= 2 && (!isWholeNumber(draft.productionWeeks) || numericAmount(draft.productionWeeks) < 1 || numericAmount(draft.productionWeeks) > 52 || !isWholeNumber(draft.minimumFundingTargetIdr) || numericAmount(draft.minimumFundingTargetIdr) < 1 || !isWholeNumber(draft.minimumOrderQuantity) || numericAmount(draft.minimumOrderQuantity) < 1 || draft.costs.length < 1 || draft.costs.length > 100 || draft.costs.some((cost) => {
       const name = cost.name.trim()
       return !cost.category || !name || name.length > 160 || !isWholeNumber(cost.plannedTotalIdr) || numericAmount(cost.plannedTotalIdr) < 0
@@ -184,9 +215,9 @@ export default function CampaignBuilderPage() {
     }
     setPending(true)
     try {
-      const response = await createCampaign(input, { designImage: draft.designImage })
+      const response = await createCampaign(input, { designImage: draft.designImage, productImages: draft.products.map((product) => product.image).filter((image): image is File => image !== null) })
       toast({ message: response.message, variant: 'success' })
-      navigate(`/campaigns/${response.data.id}`)
+      navigate(`/campaigns/${response.data.id}/manage`)
     } catch (caught) {
       toast({ message: getApiErrorMessage(caught, 'Tidak dapat membuat kampanye. Periksa detail lalu coba lagi.'), variant: 'error' })
     } finally {
@@ -194,7 +225,7 @@ export default function CampaignBuilderPage() {
     }
   }
 
-  return <div className="min-h-[100dvh] bg-cream lg:grid lg:h-[100dvh] lg:grid-cols-[minmax(300px,.8fr)_minmax(0,1.2fr)] lg:overflow-hidden">
+  return <div className="min-h-[100dvh] bg-cream lg:fixed lg:inset-0 lg:grid lg:h-[100dvh] lg:w-full lg:grid-cols-[minmax(300px,.8fr)_minmax(0,1.2fr)] lg:overflow-hidden">
     <aside className="relative overflow-hidden bg-primary-dark px-5 py-6 text-white sm:px-8 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:px-12 lg:py-10" aria-label="Ringkasan kampanye dan progres">
       <div className="absolute -right-24 -top-16 h-72 w-72 rounded-full bg-primary/45 blur-3xl" aria-hidden="true" />
       <div className="relative flex items-center justify-between gap-4">
@@ -235,35 +266,35 @@ export default function CampaignBuilderPage() {
           {step === 1 && <div>
             <StepHeading headingRef={headingRef} eyebrow="Pilihan, harga, dan foto" title="Tambahkan produk dan harga" description="Susun setiap pilihan produk secara terpisah agar informasi dan harganya mudah diperiksa." />
             <div className="mt-7 grid gap-6">
-              {draft.products.map((product, index) => <fieldset key={product.id} className="border-t border-line pt-6 first:border-t-0 first:pt-0">
+              {draft.products.map((product, index) => <fieldset key={product.id} className="rounded-2xl border border-line p-4 sm:p-6">
                 <legend className="sr-only">Produk {index + 1}</legend>
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <p className="text-sm font-extrabold text-ink">Produk {index + 1}</p>
+                  <div><p className="text-base font-extrabold text-ink">Produk {index + 1}</p><p className="mt-1 text-xs text-muted">Informasi ini tampil sebagai kartu produk di halaman kampanye.</p></div>
                   <button type="button" onClick={() => removeProduct(product.id)} disabled={draft.products.length === 1} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-line text-error transition hover:border-error hover:bg-error/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error disabled:cursor-not-allowed disabled:opacity-40" aria-label={`Hapus produk ${index + 1}`}><Trash2 size={17} aria-hidden="true" /></button>
                 </div>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Input id={`product-name-${product.id}`} label="Nama produk" required maxLength={160} value={product.name} onChange={(event) => updateProduct(product.id, 'name', event.target.value)} />
-                  <Input id={`product-type-${product.id}`} label="Jenis produk" hint="Contoh: Selendang, tas, kain, atau pakaian." required maxLength={80} value={product.productType} onChange={(event) => updateProduct(product.id, 'productType', event.target.value)} />
-                  <div className="md:col-span-2"><Input id={`product-price-${product.id}`} label="Harga jual" type="number" min={1} step={1} required value={product.priceIdr} onChange={(event) => updateProduct(product.id, 'priceIdr', numericValue(event.target.value))} /></div>
+                <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_180px]">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Input id={`product-name-${product.id}`} label="Nama produk" required maxLength={160} value={product.name} onChange={(event) => updateProduct(product.id, 'name', event.target.value)} />
+                    <Input id={`product-type-${product.id}`} label="Jenis produk" required maxLength={80} value={product.productType} onChange={(event) => updateProduct(product.id, 'productType', event.target.value)} />
+                    <div className="sm:col-span-2"><Input id={`product-price-${product.id}`} label="Harga jual" hint="Masukkan harga satu produk dalam rupiah." type="number" min={1} step={1} required value={product.priceIdr} onChange={(event) => updateProduct(product.id, 'priceIdr', numericValue(event.target.value))} /></div>
+                  </div>
+                  <ProductImageField product={product} index={index} onSelect={(file) => selectProductImage(product.id, file)} />
                 </div>
-                <RichTextEditor id={`product-description-${product.id}`} label="Deskripsi dan batas kustomisasi" required maxLength={2_000} value={product.description} onChange={(value) => updateProduct(product.id, 'description', value)} className="mt-5" />
+                <RichTextEditor id={`product-description-${product.id}`} label="Deskripsi dan batas kustomisasi" required maxLength={2_000} value={product.description} onChange={(value) => updateProduct(product.id, 'description', value)} className="mt-7" />
               </fieldset>)}
 
               <Button type="button" variant="outline" onClick={addProduct} disabled={draft.products.length >= 50} className="justify-self-start"><Plus size={16} aria-hidden="true" />Tambah produk</Button>
 
-              <div className="rounded-xl border border-line p-4 sm:p-6">
-                <img src={previewUrl || campaignFallback} alt={draft.designImage ? `Pratinjau foto utama ${draft.collectionName || 'kampanye'}` : ''} aria-hidden={!draft.designImage} className="aspect-[2/1] w-full rounded-lg border border-line object-cover lg:hidden" />
-                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:mt-0">
-                  <div>
-                    <p className="text-sm font-extrabold text-ink">Foto utama kampanye</p>
-                    <p id="design-image-hint" className="mt-1 text-xs leading-5 text-muted">JPG, PNG, atau WebP. Maksimum 10 MB.</p>
-                    {draft.designImage && <p className="mt-1 max-w-xs truncate text-xs font-bold text-primary-dark">{draft.designImage.name} · {formatFileSize(draft.designImage.size)}</p>}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+              <div className="rounded-2xl border border-line p-4 sm:p-6">
+                <div><p className="text-base font-extrabold text-ink">Foto utama kampanye</p><p className="mt-1 text-xs leading-5 text-muted">Foto ini menjadi sampul kampanye di halaman koleksi.</p></div>
+                <div className="mt-5 grid items-start gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
+                  <div className="relative aspect-square w-full max-w-[180px] overflow-hidden rounded-2xl border border-line bg-cream">
                     <input id="design-image" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="design-image-hint" className="peer sr-only" onChange={(event) => { selectDesignImage(event.target.files?.[0] ?? null); event.currentTarget.value = '' }} />
-                    <label htmlFor="design-image" className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-primary-dark px-5 py-2.5 text-sm font-extrabold text-primary-dark transition hover:bg-primary-dark hover:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-dark"><ImagePlus size={17} aria-hidden="true" />{draft.designImage ? 'Ganti foto' : 'Pilih foto'}</label>
-                    {draft.designImage && <Button type="button" variant="ghost" onClick={() => update('designImage', null)}><Trash2 size={17} aria-hidden="true" />Hapus foto</Button>}
+                    <img src={previewUrl || campaignFallback} alt={draft.designImage ? `Pratinjau foto utama ${draft.collectionName || 'kampanye'}` : ''} aria-hidden={!draft.designImage} className="absolute inset-0 h-full w-full object-cover" />
+                    <label htmlFor="design-image" className={`absolute inset-0 flex cursor-pointer items-center justify-center p-4 text-center text-sm font-extrabold transition peer-focus-visible:outline-2 peer-focus-visible:outline-offset-[-4px] peer-focus-visible:outline-primary-dark ${draft.designImage ? 'items-end bg-gradient-to-t from-ink/75 via-transparent to-transparent text-white opacity-0 hover:opacity-100' : 'bg-white/75 text-primary-dark hover:bg-white/90'}`}><span className="inline-flex items-center gap-2"><ImagePlus size={18} aria-hidden="true" />{draft.designImage ? 'Ganti foto' : 'Pilih foto'}</span></label>
+                    {draft.designImage && <button type="button" onClick={() => update('designImage', null)} className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-white text-error shadow-sm hover:bg-error/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error" aria-label="Hapus foto utama kampanye"><Trash2 size={15} aria-hidden="true" /></button>}
                   </div>
+                  <div className="min-w-0"><p id="design-image-hint" className="text-xs leading-5 text-muted">JPG, PNG, atau WebP. Maksimum 10 MB.</p><p className="mt-2 truncate text-xs font-bold text-primary-dark">{draft.designImage ? `${draft.designImage.name} · ${formatFileSize(draft.designImage.size)}` : 'Belum ada foto utama yang dipilih.'}</p></div>
                 </div>
               </div>
             </div>
@@ -301,7 +332,7 @@ export default function CampaignBuilderPage() {
           </div>}
 
           {step === 3 && <div>
-            <StepHeading headingRef={headingRef} eyebrow="Pemeriksaan dan persetujuan" title="Tinjau sebelum menerbitkan" description="Periksa kembali keputusan utama kampanye. Kembali ke langkah sebelumnya jika ada yang perlu diperbaiki." />
+            <StepHeading headingRef={headingRef} eyebrow="Pemeriksaan dan persetujuan" title="Tinjau sebelum menyimpan" description="Periksa kembali keputusan utama kampanye. Anda masih dapat mengubah judul dan foto sebelum menerbitkannya." />
             <div className="mt-7 grid gap-6">
               <div>
                 <p className="text-xs font-extrabold text-muted">Koleksi</p>
@@ -332,7 +363,7 @@ export default function CampaignBuilderPage() {
 
           <div className={`mt-8 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center ${step === 0 ? 'sm:justify-end' : 'sm:justify-between'}`}>
             {step > 0 && <Button type="button" variant="ghost" onClick={() => setStep((current) => Math.max(0, current - 1))} className="w-full sm:w-auto"><ArrowLeft size={15} aria-hidden="true" />Kembali</Button>}
-            {step < 3 ? <Button type="button" onClick={next} className="w-full sm:w-auto">Berikutnya <ArrowRight size={15} aria-hidden="true" /></Button> : <Button type="button" onClick={submit} disabled={!draft.confirmed || pending} loading={pending} className="w-full sm:w-auto">{pending ? 'Menerbitkan…' : 'Terbitkan kampanye'} <ArrowRight size={15} aria-hidden="true" /></Button>}
+            {step < 3 ? <Button type="button" onClick={next} className="w-full sm:w-auto">Berikutnya <ArrowRight size={15} aria-hidden="true" /></Button> : <Button type="button" onClick={submit} disabled={!draft.confirmed || pending} loading={pending} className="w-full sm:w-auto">{pending ? 'Menyimpan…' : 'Simpan draf'} <ArrowRight size={15} aria-hidden="true" /></Button>}
           </div>
         </section>
       </div>

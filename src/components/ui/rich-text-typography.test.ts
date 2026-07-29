@@ -10,6 +10,10 @@ test('combines font size and line height into one editor style attribute', () =>
   )
 })
 
+test('accepts a safe manually entered font size', () => {
+  assert.deepEqual(getRichTextTypographyHTMLAttributes({ fontSize: '22px' }), { style: 'font-size: 22px' })
+})
+
 test('omits typography declarations outside the allowlist', () => {
   assert.deepEqual(
     getRichTextTypographyHTMLAttributes({ fontSize: 'calc(1px + 1vw)', lineHeight: 'url(test)' }),

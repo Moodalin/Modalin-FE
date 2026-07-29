@@ -1,7 +1,7 @@
 import { ApiPaths } from '@/constants/api'
 import { apiClient, type ApiSuccess } from '@/config/api-client'
 import { TextileSources } from '@/constants/textile-sources'
-import type { Campaign, FundItem, Milestone, Product, ProductVariant } from '@/types/campaign'
+import type { Campaign, FundItem, ManagedCampaign, Milestone, OwnedCampaignSummary, Product, ProductVariant } from '@/types/campaign'
 import type { CreateCampaignInput, CreateCampaignResult } from '@/types/builder'
 
 interface ApiVariant {
@@ -189,9 +189,38 @@ export async function getCampaignPage({ limit, cursor, signal, query, status, lo
   }
 }
 
-export async function createCampaign(input: CreateCampaignInput, files: { designImage: File | null }) {
+export async function createCampaign(input: CreateCampaignInput, files: { designImage: File | null; productImages: File[] }) {
   const form = new FormData()
   form.set('campaign', JSON.stringify(input))
   if (files.designImage) form.set('designImage', files.designImage)
+  files.productImages.forEach((image) => form.append('productImages', image))
   return apiClient.postForm<ApiSuccess<CreateCampaignResult>>(ApiPaths.campaigns, form)
+}
+
+export async function getOwnedCampaigns(): Promise<OwnedCampaignSummary[]> {
+  const response = await apiClient.get<ApiSuccess<OwnedCampaignSummary[]>>(ApiPaths.ownedCampaigns)
+  return response.data
+}
+
+export async function getManagedCampaign(identifier: string): Promise<ManagedCampaign> {
+  const response = await apiClient.get<ApiSuccess<ManagedCampaign>>(ApiPaths.campaignManage(identifier))
+  return response.data
+}
+
+export async function updateCampaignTitle(identifier: string, title: string) {
+  return apiClient.patch<ApiSuccess<ManagedCampaign>>(ApiPaths.campaign(identifier), { title })
+}
+
+export async function updateCampaignImage(identifier: string, image: File) {
+  const form = new FormData()
+  form.set('designImage', image)
+  return apiClient.postForm<ApiSuccess<ManagedCampaign>>(ApiPaths.campaignImage(identifier), form)
+}
+
+export async function publishCampaign(identifier: string) {
+  return apiClient.post<ApiSuccess<ManagedCampaign>>(ApiPaths.campaignPublish(identifier))
+}
+
+export async function deleteCampaign(identifier: string) {
+  return apiClient.delete<ApiSuccess<{ id: string }>>(ApiPaths.campaign(identifier))
 }

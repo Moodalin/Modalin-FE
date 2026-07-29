@@ -1,4 +1,33 @@
 export type CampaignStatus = 'funding' | 'target_reached' | 'in_production' | 'completed'
+export type CampaignLifecycleStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'FUNDING' | 'TARGET_REACHED' | 'IN_PRODUCTION' | 'QUALITY_CHECK' | 'PACKING' | 'SHIPPING' | 'COMPLETED' | 'FAILED' | 'EXTENDED' | 'CANCELLED'
+
+export interface OwnedCampaignSummary {
+  id: string
+  slug: string
+  title: string
+  heroImageUrl: string | null
+  status: CampaignLifecycleStatus
+  campaignDeadline: string
+  currentFundingAmountIdr: number
+  minimumFundingTargetIdr: number
+  currentOrderQuantity: number
+  minimumOrderQuantity: number
+  publishedAt: string | null
+  updatedAt: string
+  canDelete: boolean
+  progress: { fundingPercentage: number; orderPercentage: number }
+  _count: { orders: number }
+}
+
+export interface ManagedCampaign {
+  id: string
+  slug: string
+  title: string
+  heroImageUrl: string | null
+  status: CampaignLifecycleStatus
+  publishedAt: string | null
+  _count: { orders: number }
+}
 
 export interface ProductVariant {
   id: string
@@ -164,7 +193,15 @@ export interface DashboardData {
     id: string
     slug: string
     title: string
+    description: string
+    heroImageUrl: string | null
     status: string
+    campaignDeadline: string
+    productionDurationDays: number
+    estimatedDeliveryDate: string
+    groupName: string
+    location: string
+    productCount: number
     currentFundingAmountIdr: number
     minimumFundingTargetIdr: number
     currentOrderQuantity: number

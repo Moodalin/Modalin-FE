@@ -8,6 +8,7 @@ export interface BuilderProductDraft {
   productType: string
   description: string
   priceIdr: BuilderNumber
+  image: File | null
 }
 
 export interface BuilderCostDraft {

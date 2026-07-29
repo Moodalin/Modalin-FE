@@ -1,7 +1,9 @@
-import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { Bold, Code, Heading2, Heading3, Italic, Link2, List, ListOrdered, Maximize2, Minimize2, Minus, Pilcrow, Quote, Redo2, RemoveFormatting, Strikethrough, Underline, Undo2 } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { Bold, Check, ChevronDown, Code, Heading2, Heading3, Italic, Link2, List, ListOrdered, Maximize2, Minimize2, Minus, Pilcrow, Quote, Redo2, RemoveFormatting, Strikethrough, Underline, Undo2 } from 'lucide-react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { Select } from '@/components/ui/select'
 import { cn } from '@/components/ui/utils'
 import { parseRichText, richTextToPlainText, type RichTextNode } from '@/components/ui/rich-text-value'
 import { RichTextTypography, fontSizeOptions, getRichTextTypographyStyle, isRichTextTypographyValue, lineHeightOptions, type RichTextTypographyAttribute } from '@/components/ui/rich-text-typography'
@@ -119,8 +121,49 @@ const toolbarGroups: ToolbarAction[][] = [
 const toolbarControls = toolbarGroups.flatMap((group, groupIndex) => group.map((action) => ({ ...action, groupIndex })))
 
 const controlClass = 'grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary-dark aria-disabled:cursor-not-allowed aria-disabled:opacity-35 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted'
-const activeControlClass = 'bg-white text-primary-dark shadow-sm'
-const selectControlClass = 'h-9 rounded-lg border border-transparent bg-transparent pl-2 pr-7 text-xs font-extrabold text-muted transition hover:bg-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary-dark disabled:cursor-not-allowed disabled:opacity-35'
+const activeControlClass = 'text-primary-dark'
+
+function FontSizeControl({ value, disabled, onChange }: { value: string; disabled: boolean; onChange: (value: string) => void }) {
+  const [draft, setDraft] = useState(value ? value.replace('px', '') : '16')
+  const [open, setOpen] = useState(false)
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({})
+  const rootRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => setDraft(value ? value.replace('px', '') : '16'), [value])
+  useEffect(() => {
+    if (!open) return
+    const position = () => {
+      const rect = rootRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const height = 252
+      const above = window.innerHeight - rect.bottom < height && rect.top > height
+      setMenuStyle({ position: 'fixed', left: rect.left, top: above ? rect.top - height - 6 : rect.bottom + 6, width: 76 })
+    }
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false)
+    }
+    position()
+    document.addEventListener('pointerdown', closeOnOutside)
+    window.addEventListener('resize', position)
+    window.addEventListener('scroll', position, true)
+    return () => { document.removeEventListener('pointerdown', closeOnOutside); window.removeEventListener('resize', position); window.removeEventListener('scroll', position, true) }
+  }, [open])
+
+  const commit = () => {
+    const size = Math.round(Number(draft))
+    if (!Number.isFinite(size)) return setDraft(value ? value.replace('px', '') : '16')
+    const safeSize = Math.min(72, Math.max(8, size))
+    setDraft(String(safeSize))
+    onChange(`${safeSize}px`)
+  }
+
+  const menu = <div ref={menuRef} role="listbox" aria-label="Preset ukuran teks" style={menuStyle} className="fixed z-[120] max-h-64 overflow-y-auto rounded-lg border border-line bg-white p-1 shadow-[0_12px_28px_rgba(29,37,34,.16)]">{fontSizeOptions.map((option) => <button key={option.value} type="button" role="option" aria-selected={option.value === value || (!value && option.value === '16px')} onClick={() => { setDraft(option.label); onChange(option.value); setOpen(false) }} className="flex min-h-9 w-full items-center justify-between rounded-md px-2 text-xs font-semibold text-ink hover:bg-cream focus-visible:outline-2 focus-visible:outline-primary-dark"><span>{option.label}</span>{(option.value === value || (!value && option.value === '16px')) && <Check size={14} className="text-primary-dark" aria-hidden="true" />}</button>)}</div>
+
+  return <div ref={rootRef} className="flex h-8 w-[5.25rem] items-center rounded-md border border-transparent hover:bg-white focus-within:border-primary-dark focus-within:ring-2 focus-within:ring-primary/15"><input type="number" min={8} max={72} step={1} value={draft} disabled={disabled} aria-label="Ukuran teks, 8 sampai 72 piksel" onChange={(event) => setDraft(event.target.value)} onBlur={commit} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); commit() } }} className="h-full min-w-0 flex-1 bg-transparent px-2 text-center text-xs font-semibold text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" /><button ref={triggerRef} type="button" disabled={disabled} aria-label="Pilih preset ukuran teks" aria-expanded={open} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpen((current) => !current)} className="grid h-full w-7 shrink-0 place-items-center text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-primary-dark"><ChevronDown size={14} className={open ? 'rotate-180' : ''} aria-hidden="true" /></button>{open && createPortal(menu, document.body)}</div>
+}
 
 function normalizeLinkHref(raw: string) {
   const trimmed = raw.trim()
@@ -277,7 +320,7 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
   }
 
   const handleToolbarKeys = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.target instanceof HTMLSelectElement) return
+    if ((event.target as HTMLElement).closest('[role="combobox"]')) return
     const total = toolbarControls.length + 1
     if (event.key === 'ArrowRight') focusControl((focusedControl + 1) % total)
     else if (event.key === 'ArrowLeft') focusControl((focusedControl - 1 + total) % total)
@@ -330,26 +373,8 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
         </Fragment>
       })}
       <span aria-hidden="true" className="mx-0.5 h-6 w-px self-center bg-line" />
-      <select
-        aria-label="Ukuran teks"
-        title="Ukuran teks"
-        value={currentFontSize}
-        disabled={!editor}
-        onChange={(event) => updateBlockTypography('fontSize', event.target.value)}
-        className={cn(selectControlClass, 'w-[7.25rem]')}
-      >
-        {fontSizeOptions.map((option) => <option key={option.value || 'default'} value={option.value}>{option.label}</option>)}
-      </select>
-      <select
-        aria-label="Jarak baris"
-        title="Jarak baris"
-        value={currentLineHeight}
-        disabled={!editor}
-        onChange={(event) => updateBlockTypography('lineHeight', event.target.value)}
-        className={cn(selectControlClass, 'w-[6.75rem]')}
-      >
-        {lineHeightOptions.map((option) => <option key={option.value || 'default'} value={option.value}>{option.label}</option>)}
-      </select>
+      <FontSizeControl value={currentFontSize} disabled={!editor} onChange={(nextValue) => updateBlockTypography('fontSize', nextValue)} />
+      <div className="w-[4.5rem] min-w-0"><Select id={`${id}-line-height`} label="Jarak baris" labelClassName="sr-only" value={currentLineHeight} options={lineHeightOptions} disabled={!editor} onChange={(nextValue) => updateBlockTypography('lineHeight', nextValue)} toolbar /></div>
       <span aria-hidden="true" className="mx-0.5 h-6 w-px self-center bg-line" />
       <button
         ref={(element) => { controlRefs.current[toolbarControls.length] = element; maximizeButtonRef.current = element }}
@@ -361,7 +386,7 @@ export function RichTextEditor({ id, label, value, onChange, error, hint, requir
         aria-controls={id}
         onFocus={() => setFocusedControl(toolbarControls.length)}
         onClick={() => setIsMaximized(!isMaximized)}
-        className={cn(controlClass, 'ml-auto', isMaximized && activeControlClass)}
+        className={cn(controlClass, 'ml-auto')}
       >{isMaximized ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}</button>
     </div>
     {isLinkEditorOpen && <div ref={linkPopoverRef} id={linkPopoverId} role="dialog" aria-label="Tautan" onKeyDown={handleLinkKeys} className="absolute left-2 top-[calc(100%-.25rem)] z-30 grid w-[min(20rem,calc(100vw-2.5rem))] gap-2 rounded-xl border border-line bg-white p-3 shadow-[0_16px_38px_rgba(29,37,34,.14)]">

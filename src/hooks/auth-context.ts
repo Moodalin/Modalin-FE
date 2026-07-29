@@ -9,6 +9,9 @@ export type AuthContextValue = {
   signUp: (input: SignUpInput) => Promise<void>
   signInWithGoogle: (callbackURL: string) => Promise<void>
   signOut: () => Promise<void>
+  changePassword: (input: { currentPassword: string; newPassword: string }) => Promise<void>
+  requestPasswordReset: (email: string, redirectTo: string) => Promise<void>
+  hasCredentialAccount: () => Promise<boolean>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

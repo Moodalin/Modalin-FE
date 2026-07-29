@@ -10,10 +10,12 @@ const LandingPage = lazy(() => import('@/pages/landing'))
 const ForCreatorPage = lazy(() => import('@/pages/for-creator'))
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
+const ResetPasswordPage = lazy(() => import('@/pages/reset-password'))
 const OnboardingPage = lazy(() => import('@/pages/onboarding'))
 const CampaignPublicPage = lazy(() => import('@/pages/campaign-public'))
 const CampaignCollectionPage = lazy(() => import('@/pages/campaign-collection'))
 const CampaignBuilderPage = lazy(() => import('@/pages/campaign-builder'))
+const CampaignManagePage = lazy(() => import('@/pages/campaign-manage'))
 const CheckoutPage = lazy(() => import('@/pages/checkout'))
 const DashboardPage = lazy(() => import('@/pages/dashboard'))
 const ProfilePage = lazy(() => import('@/pages/profile'))
@@ -38,12 +40,14 @@ export default function App() {
             <Route path="/for-creator" element={<ForCreatorPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
             <Route path="/campaigns" element={<CampaignCollectionPage />} />
             <Route path="/campaigns/:campaignId" element={<CampaignPublicPage />} />
             <Route path="/campaigns/new" element={<ArtisanRoute><CampaignBuilderPage /></ArtisanRoute>} />
+            <Route path="/campaigns/:campaignId/manage" element={<ArtisanRoute><CampaignManagePage /></ArtisanRoute>} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ArtisanRoute><DashboardPage /></ArtisanRoute>} />
             <Route path="*" element={<NotFoundPage />} />
