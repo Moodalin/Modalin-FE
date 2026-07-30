@@ -245,16 +245,21 @@ export default function DashboardPage() {
   const selectedCampaignId = params.get('campaignId') || ''
 
   const selectCampaign = useCallback((campaignId: string) => {
-    const next = new URLSearchParams(params)
-    next.set('campaignId', campaignId)
-    next.set('tab', active)
-    setParams(next)
-  }, [active, params, setParams])
+    setParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('campaignId', campaignId)
+      return next
+    })
+  }, [setParams])
+
+  const refreshOverview = useCallback(async (campaignId: string) => {
+    const overview = await getDashboard(campaignId)
+    setDashboard(overview)
+  }, [])
 
   const load = useCallback(async () => {
     const version = ++loadVersion.current
     setLoading(true)
-    setDashboard(null)
     setRequestError(null)
     try {
       const ownedCampaigns = await getOwnedCampaigns()
@@ -267,28 +272,27 @@ export default function DashboardPage() {
       const selected = ownedCampaigns.find((campaign) => campaign.id === selectedCampaignId) ?? ownedCampaigns[0]
       if (!selected) return
       if (selected.id !== selectedCampaignId) {
-        const next = new URLSearchParams(params)
-        next.set('campaignId', selected.id)
-        next.set('tab', active)
-        setParams(next, { replace: true })
+        setParams((current) => {
+          const next = new URLSearchParams(current)
+          next.set('campaignId', selected.id)
+          return next
+        }, { replace: true })
       }
       const overview = await getDashboard(selected.id)
       if (version === loadVersion.current) setDashboard(overview)
     } catch (error) {
       if (version !== loadVersion.current) return
-      setCampaigns([])
-      setDashboard(null)
       setRequestError(getApiErrorMessage(error, 'Tidak dapat memuat dasbor. Periksa koneksi Anda lalu coba lagi.'))
     } finally {
       if (version === loadVersion.current) setLoading(false)
     }
-  }, [active, params, selectedCampaignId, setParams])
-  useEffect(() => { load() }, [load])
+  }, [selectedCampaignId, setParams])
+  useEffect(() => { void load() }, [load])
 
   const saveMilestone = async (milestoneId: string, status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED') => {
     if (pendingAction) return
     setPendingAction(`${milestoneId}:${status}`)
-    try { const response = await updateMilestone(selectedCampaignId, milestoneId, { status }); toast({ message: response.message, variant: 'success' }); await load() }
+    try { const response = await updateMilestone(milestoneId, { status }); toast({ message: response.message, variant: 'success' }); await refreshOverview(selectedCampaignId) }
     catch (error) { toast({ message: getApiErrorMessage(error, 'Tidak dapat memperbarui tahap produksi.'), variant: 'error' }) }
     finally { setPendingAction('') }
   }
@@ -301,13 +305,13 @@ export default function DashboardPage() {
       return
     }
     setPendingAction(costItemId)
-    try { const response = await updateExpense(selectedCampaignId, costItemId, { actualTotalIdr: amount }); toast({ message: response.message, variant: 'success' }); await load() }
+    try { const response = await updateExpense(costItemId, { actualTotalIdr: amount }); toast({ message: response.message, variant: 'success' }); await refreshOverview(selectedCampaignId) }
     catch (error) { toast({ message: getApiErrorMessage(error, 'Tidak dapat memperbarui biaya.'), variant: 'error' }) }
     finally { setPendingAction('') }
   }
 
-  if (loading) return <PageLoading />
-  if (requestError) return <main id="main-content" className="grid min-h-[100dvh] place-items-center bg-white px-5 text-center"><section aria-labelledby="dashboard-load-error"><h1 id="dashboard-load-error" className="font-display text-4xl tracking-[-.05em] text-ink">Dasbor tidak dapat dimuat</h1><p role="alert" className="mt-3 max-w-md text-sm leading-6 text-muted">{requestError}</p><Button type="button" className="mt-6" onClick={load}>Coba lagi</Button></section></main>
+  if (loading && !dashboard) return <PageLoading />
+  if (requestError && !dashboard) return <main id="main-content" className="grid min-h-[100dvh] place-items-center bg-white px-5 text-center"><section aria-labelledby="dashboard-load-error"><h1 id="dashboard-load-error" className="font-display text-4xl tracking-[-.05em] text-ink">Dasbor tidak dapat dimuat</h1><p role="alert" className="mt-3 max-w-md text-sm leading-6 text-muted">{requestError}</p><Button type="button" className="mt-6" onClick={load}>Coba lagi</Button></section></main>
   if (!dashboard) return null
   if (!dashboard.hasCampaign) return <DashboardLayout active={active}>{active === 'overview' ? <EmptyDashboardOverview /> : <EmptyCampaignTab active={active} />}</DashboardLayout>
   const progress = dashboard.metrics.fundingPercentage
@@ -315,6 +319,7 @@ export default function DashboardPage() {
   const selectedCampaign = campaigns.find((campaign) => campaign.id === dashboard.campaign.id)
   const isPublicCampaign = Boolean(selectedCampaign?.publishedAt)
   return <DashboardLayout active={active} campaigns={campaigns} selectedCampaignId={dashboard.campaign.id} onCampaignChange={selectCampaign}>
+    {loading && <div role="status" aria-live="polite" className="mb-5 flex items-center gap-2 rounded-xl border border-line bg-cream px-4 py-3 text-sm font-semibold text-muted"><span aria-hidden="true" className="h-4 w-4 rounded-full border-2 border-line border-t-primary-dark motion-safe:animate-spin" />Memuat kampanye…</div>}
     {active === 'overview' && <div><div className="flex flex-col justify-between gap-6 xl:flex-row xl:items-end"><PageTitle title={campaignTitle} description="Pantau target pendanaan, pesanan, dan kesiapan produksi." /><div className="flex flex-col gap-3 sm:flex-row"><ButtonLink to="/campaigns/new"><Plus size={16} aria-hidden="true" />Buat kampanye baru</ButtonLink><ButtonLink to={`/campaigns/${dashboard.campaign.id}/manage`} variant="outline">Kelola kampanye</ButtonLink>{isPublicCampaign && <ButtonLink to={`/campaigns/${dashboard.campaign.id}`} variant="outline">Halaman publik</ButtonLink>}</div></div><section className="mt-8 overflow-hidden rounded-2xl border border-line bg-white"><div className="grid lg:grid-cols-[260px_1fr]"><img src={dashboard.campaign.heroImageUrl || '/hero/1.png'} alt={`Foto utama ${campaignTitle}`} className="aspect-[16/9] h-full w-full object-cover lg:aspect-auto" /><div className="p-5 sm:p-7"><div className="flex flex-wrap items-center gap-2"><Badge className="bg-primary/10 text-primary-dark">{CampaignLifecycleLabel[dashboard.campaign.status] ?? dashboard.campaign.status}</Badge><span className="text-xs font-semibold text-muted">{dashboard.campaign.groupName} · {dashboard.campaign.location}</span></div><h2 className="mt-4 text-xl font-extrabold tracking-[-.03em] text-ink">Detail kampanye</h2><dl className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2 xl:grid-cols-4"><div><dt className="text-xs font-semibold text-muted">Batas pre-order</dt><dd className="mt-1 font-extrabold text-ink">{new Date(dashboard.campaign.campaignDeadline).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</dd></div><div><dt className="text-xs font-semibold text-muted">Estimasi pengiriman</dt><dd className="mt-1 font-extrabold text-ink">{new Date(dashboard.campaign.estimatedDeliveryDate).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</dd></div><div><dt className="text-xs font-semibold text-muted">Durasi produksi</dt><dd className="mt-1 font-extrabold text-ink">{dashboard.campaign.productionDurationDays} hari</dd></div><div><dt className="text-xs font-semibold text-muted">Produk tersedia</dt><dd className="mt-1 font-extrabold text-ink">{dashboard.campaign.productCount} produk</dd></div></dl></div></div></section><div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Produk dipesan" value={`${dashboard.campaign.currentOrderQuantity} / ${dashboard.campaign.minimumOrderQuantity}`} note="Target minimum" icon={ShoppingBag} /><Metric label="Dana terkumpul" value={formatCompactRupiah(dashboard.campaign.currentFundingAmountIdr)} note={`Target ${formatCompactRupiah(dashboard.campaign.minimumFundingTargetIdr)}`} icon={WalletCards} /><Metric label="Kemajuan dana" value={`${progress}%`} note="Dari target pendanaan" icon={TrendingUp} /><Metric label="Pesanan masuk" value={String(dashboard.metrics.orderCount)} note="Tercatat di sistem" icon={Receipt} /></div><section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white"><div className="border-b border-line p-5 sm:p-7"><SectionTitle title="Kemajuan pendanaan" note="Dana yang dicatat berasal dari pre-order yang dikonfirmasi." /></div><div className="p-5 sm:p-7"><Progress value={progress} label="Target dana" /><div className="mt-6 grid gap-3 sm:grid-cols-3"><Metric label="Target" value={formatCompactRupiah(dashboard.campaign.minimumFundingTargetIdr)} note="Dana minimum" icon={FileText} /><Metric label="Terkumpul" value={formatCompactRupiah(dashboard.campaign.currentFundingAmountIdr)} note="Dana tercatat" icon={Banknote} /><Metric label="Sisa target" value={formatCompactRupiah(Math.max(0, dashboard.campaign.minimumFundingTargetIdr - dashboard.campaign.currentFundingAmountIdr))} note="Agar produksi dimulai" icon={Clock3} /></div></div></section></div>}
     {active === 'overview' && <OrderActivityGraph orders={dashboard.orders} />}
 

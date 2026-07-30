@@ -51,6 +51,7 @@ interface ApiCampaign {
   minimumOrderQuantity: number
   currentFundingAmountIdr: number
   currentOrderQuantity: number
+  acceptsOrders: boolean
   group: {
     name: string
     location: string
@@ -137,6 +138,7 @@ export function mapCampaign(data: ApiCampaign): Campaign {
     currentAmount: data.currentFundingAmountIdr,
     targetOrders: data.minimumOrderQuantity,
     currentOrders: data.currentOrderQuantity,
+    acceptsOrders: data.acceptsOrders,
     daysLeft,
     deadline: formatDate(data.campaignDeadline),
     deliveryEstimate: formatDate(data.estimatedDeliveryDate),

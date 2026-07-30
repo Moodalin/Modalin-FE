@@ -101,6 +101,7 @@ export interface Campaign {
   currentAmount: number
   targetOrders: number
   currentOrders: number
+  acceptsOrders: boolean
   daysLeft: number
   deadline: string
   deliveryEstimate: string

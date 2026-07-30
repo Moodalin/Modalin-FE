@@ -6,7 +6,7 @@ import { formatRupiah } from '@/config/format'
 import { RichTextView } from '@/components/ui/rich-text'
 import type { Product } from '@/types/campaign'
 
-export function ProductCard({ product, campaignId }: { product: Product; campaignId?: string }) {
+export function ProductCard({ product, campaignId, orderingOpen = true }: { product: Product; campaignId?: string; orderingOpen?: boolean }) {
   const checkoutPath = `/checkout?product=${product.id}${campaignId ? `&campaign=${encodeURIComponent(campaignId)}` : ''}`
 
   return <article className="group grid overflow-hidden rounded-2xl border border-line bg-white transition-shadow duration-300 hover:shadow-[0_18px_38px_rgba(29,37,34,.09)] lg:grid-cols-[.9fr_1.1fr]">
@@ -17,7 +17,7 @@ export function ProductCard({ product, campaignId }: { product: Product; campaig
       <RichTextView value={product.description} className="mt-3 line-clamp-3 text-sm leading-6" />
       <div className="mt-auto pt-6">
         <p className="text-xl font-extrabold tracking-[-.03em] text-ink">{formatRupiah(product.price)}</p>
-        <div className="mt-4 flex items-center justify-between gap-4"><span className="text-xs font-bold text-muted">{product.variants.length} pilihan</span><ButtonLink to={checkoutPath} className="min-h-10 rounded-lg px-4 py-2 text-xs">Pesan <ArrowRight size={15} aria-hidden="true" /></ButtonLink></div>
+        <div className="mt-4 flex items-center justify-between gap-4"><span className="text-xs font-bold text-muted">{product.variants.length} pilihan</span>{orderingOpen ? <ButtonLink to={checkoutPath} className="min-h-10 rounded-lg px-4 py-2 text-xs">Pesan <ArrowRight size={15} aria-hidden="true" /></ButtonLink> : <span className="rounded-lg bg-cream px-3 py-2 text-xs font-bold text-muted">Ditutup</span>}</div>
       </div>
     </div>
   </article>

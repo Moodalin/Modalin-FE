@@ -7,10 +7,10 @@ export async function getDashboard(campaignId?: string): Promise<DashboardRespon
   return response.data
 }
 
-export async function updateMilestone(campaignId: string, milestoneId: string, input: { status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'; note?: string | null; isPublic?: boolean }) {
-  return apiClient.post<ApiSuccess<unknown>>(ApiPaths.campaignMilestone(campaignId), { milestoneId, ...input })
+export async function updateMilestone(milestoneId: string, input: { status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'; note?: string | null; isPublic?: boolean }) {
+  return apiClient.patch<ApiSuccess<unknown>>(ApiPaths.milestone(milestoneId), input)
 }
 
-export async function updateExpense(campaignId: string, costItemId: string, input: { actualTotalIdr: number; receiptUrl?: string | null; receiptName?: string | null; note?: string | null }) {
-  return apiClient.post<ApiSuccess<unknown>>(ApiPaths.campaignExpense(campaignId), { costItemId, ...input })
+export async function updateExpense(costItemId: string, input: { actualTotalIdr: number; receiptUrl?: string | null; receiptName?: string | null; note?: string | null }) {
+  return apiClient.patch<ApiSuccess<unknown>>(ApiPaths.expense(costItemId), input)
 }

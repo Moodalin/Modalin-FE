@@ -142,6 +142,8 @@ export default function CheckoutPage() {
   if (loading) return <PageLoading />
   if (campaignError || !campaign) return <main id="main-content" className="grid min-h-screen place-items-center bg-cream px-5"><div className="w-full max-w-md rounded-2xl border border-line bg-white p-6 text-center"><h1 className="font-display text-2xl font-extrabold tracking-[-.04em] text-ink">Kampanye tidak dapat dimuat</h1><p role="alert" className="mt-3 text-sm leading-6 text-muted">Periksa koneksi Anda, lalu coba lagi.</p><div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center"><Button type="button" onClick={retryCampaign}>Coba lagi</Button><Button type="button" variant="outline" onClick={() => navigate('/')}>Kembali ke beranda</Button></div></div></main>
 
+  if (!campaign.acceptsOrders) return <main id="main-content" className="grid min-h-screen place-items-center bg-cream px-5"><div className="w-full max-w-md rounded-2xl border border-line bg-white p-6 text-center"><h1 className="font-display text-3xl font-extrabold tracking-[-.04em] text-ink">Pre-order sudah ditutup</h1><p className="mt-3 text-sm leading-6 text-muted">Kampanye ini tidak lagi menerima pesanan baru.</p><Button type="button" variant="outline" className="mt-6" onClick={() => navigate(`/campaigns/${campaign.id}`)}>Kembali ke kampanye</Button></div></main>
+
   const productOptions: SelectOption[] = campaign.products.map((candidate) => ({ value: candidate.id, label: candidate.name, description: formatRupiah(candidate.price) }))
 
   return <div className="min-h-screen bg-white">

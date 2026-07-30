@@ -3,7 +3,7 @@ import { ApiPaths } from '@/constants/api'
 import type { OrderHistoryItem, OrderPaymentResult, PreorderInput, PreorderResult } from '@/types/campaign'
 
 export async function createPreorder(campaignId: string, input: PreorderInput): Promise<ApiSuccess<PreorderResult>> {
-  return apiClient.post<ApiSuccess<PreorderResult>>(ApiPaths.preorder(campaignId), {
+  return apiClient.post<ApiSuccess<PreorderResult>>(ApiPaths.campaignOrder(campaignId), {
     customerName: input.customerName,
     customerEmail: input.email,
     customerPhone: input.phone || null,

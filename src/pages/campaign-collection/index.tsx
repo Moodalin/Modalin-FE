@@ -117,8 +117,8 @@ function FilterMenu<T extends string>({ label, options, value, onChange }: { lab
 
   return <div ref={rootRef} className="relative grid gap-2">
     <span id={labelId} className="text-sm font-extrabold tracking-[-.01em] text-ink">{label}</span>
-    <button ref={triggerRef} type="button" aria-haspopup="menu" aria-expanded={isOpen} aria-controls={menuId} aria-labelledby={labelId} onClick={() => { if (isOpen) closeMenu(); else openMenu() }} onKeyDown={handleTriggerKeyDown} className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 text-left text-base text-ink outline-none transition hover:border-primary-dark focus:border-primary-dark focus:ring-4 focus:ring-primary/15">
-      <span className="truncate">{selected.label}</span>
+    <button ref={triggerRef} type="button" aria-haspopup="menu" aria-expanded={isOpen} aria-controls={menuId} aria-labelledby={labelId} onClick={() => { if (isOpen) closeMenu(); else openMenu() }} onKeyDown={handleTriggerKeyDown} className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 text-left text-base text-ink outline-none transition hover:border-primary-dark focus:border-primary-dark focus:ring-4 focus:ring-primary/15">
+      <span className="min-w-0 break-words">{selected.label}</span>
       <ChevronDown size={18} className={isOpen ? 'shrink-0 rotate-180 text-primary-dark transition-transform' : 'shrink-0 text-muted transition-transform'} aria-hidden="true" />
     </button>
     {isOpen && <div id={menuId} role="menu" aria-labelledby={labelId} className="absolute inset-x-0 top-[calc(100%+.5rem)] z-20 overflow-hidden rounded-xl border border-line bg-white p-1 shadow-[0_16px_38px_rgba(29,37,34,.14)]" onKeyDown={handleMenuKeyDown}>
@@ -269,7 +269,7 @@ export default function CampaignCollectionPage() {
   return <div className="min-h-screen bg-white text-ink"><MarketingHeader /><main id="main-content">
     <section className="bg-white px-5 py-12 lg:px-8 lg:py-20"><div className="mx-auto max-w-[1280px]"><p className="text-[11px] font-extrabold uppercase tracking-[.16em] text-primary-dark">Koleksi Modalin</p><h1 tabIndex={-1} className="mt-4 max-w-3xl font-display text-5xl leading-[.88] tracking-[-.065em] text-ink sm:text-6xl lg:text-7xl">Temukan kain yang dibuat dari permintaan nyata.</h1><p className="mt-6 max-w-2xl text-base leading-7 text-muted">Telusuri kampanye tenun dari kelompok pengrajin di berbagai daerah, lalu pesan produk yang membantu proses produksi dimulai.</p></div></section>
     <section className="px-5 py-8 lg:px-8 lg:py-12"><div className="mx-auto max-w-[1280px]">
-      <form role="search" onSubmit={(event) => event.preventDefault()} className="grid gap-4 bg-white lg:grid-cols-[minmax(0,1fr)_190px_190px_190px] lg:items-end">
+      <form role="search" onSubmit={(event) => event.preventDefault()} className="grid gap-4 bg-white md:grid-cols-2 xl:grid-cols-[minmax(280px,1.2fr)_minmax(200px,.7fr)_minmax(280px,1fr)_minmax(220px,.8fr)] xl:items-end">
         <Input id="campaign-search" type="search" label="Cari kampanye" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nama kain, pengrajin, atau daerah" className="bg-white" />
         <FilterMenu label="Status" value={status} onChange={setStatus} options={statusOptions} />
         <FilterMenu label="Lokasi" value={location} onChange={setLocation} options={[{ value: 'all', label: 'Semua lokasi' }, ...knownLocations.map((option) => ({ value: option, label: option }))]} />
